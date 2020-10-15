@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Indoor Positioning</string>
+    <string name="float_button_name">"Ekle"</string>
+    <string name="see_location">"See Location"</string>
+    <string name="see_ibeacon">"iBeacon List"</string>
+    <string name="information">"Info"</string>
+    <string name="ble_not_supported">"BLE bu cihazda desteklenmiyor."</string>
+    <string name="unknown_device">"Bilinmeyen cihaz."</string>
+    <string name="search_devices">"Tarama başladı"</string>
+    <string name="ble_device_name">%1$s</string>
+    <string name="ble_rssi">RSSI: %1$d</string>
+    <string name="ble_distance">Uzaklık: %1$s m</string>
+</resources>

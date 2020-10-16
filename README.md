@@ -1,2 +1,2 @@
 # indoorpositioning
-Indoor Positioning with BLE and WiFi
+Indoor Positioning with BLE and WiFi Technologies

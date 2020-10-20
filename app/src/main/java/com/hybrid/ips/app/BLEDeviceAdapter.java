@@ -22,20 +22,24 @@ import java.util.HashMap;
 public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.ViewHolder> {
     private ArrayList<BluetoothDevice> deviceList;
     private static final String TAG = "BLE_Connection";
-    private HashMap<BluetoothDevice, Integer> hashRssiMap;
-    private HashMap<BluetoothDevice, Integer> hashTxPowerMap;
+    private HashMap<BluetoothDevice, Double> hashRssiMap;
+    private HashMap<BluetoothDevice, Double> hashTxPowerMap;
+    private HashMap<String, KalmanFilter> mKalmanFilters;
     private DecimalFormat df2 = new DecimalFormat("#.###");
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private Context context;
+    private static final double KALMAN_R = 0.125d;
+    private static final double KALMAN_Q = 0.5d;
 
     BLEDeviceAdapter(Context context)
     {
         this.context=context;
         deviceList = new ArrayList<BluetoothDevice>();
-        hashRssiMap = new HashMap<BluetoothDevice, Integer>();
-        hashTxPowerMap = new HashMap<BluetoothDevice, Integer>();
+        hashRssiMap = new HashMap<BluetoothDevice, Double>();
+        hashTxPowerMap = new HashMap<BluetoothDevice, Double>();
         database=FirebaseDatabase.getInstance();
+        mKalmanFilters=new HashMap<String,KalmanFilter>();
         myRef=database.getReference("devices/iBeacons");
     }
 
@@ -58,15 +62,31 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
 
     public void addRssi(BluetoothDevice device, Integer rssi)
     {
+        double smoothedRssi=0;
         if (deviceList.contains(device))
         {
-            hashRssiMap.put(device, rssi);
-            myRef.child(device.getAddress()).child("rssi").setValue(rssi);
 
+            if (mKalmanFilters.keySet().contains(device.getAddress())) {
+                KalmanFilter mKalman = mKalmanFilters.get(device.getAddress());
+
+                // This will give you a smoothed RSSI value because 'x == lastRssi'
+                smoothedRssi = mKalman.applyFilter(rssi);
+
+                // Do what you want with this rssi
+            } else {
+                KalmanFilter mKalman = new KalmanFilter(KALMAN_R, KALMAN_Q);
+                smoothedRssi = mKalman.applyFilter(rssi);
+                mKalmanFilters.put(device.getAddress(), mKalman);
+            }
+
+            Log.i(TAG, "Old Rssi: " + rssi + "Smooth RSSI: " + smoothedRssi);
+            hashRssiMap.put(device, smoothedRssi);
+            myRef.child(device.getAddress()).child("rssi").setValue(smoothedRssi);
         }
+
     }
 
-    public void addTxPower(BluetoothDevice device, Integer txPower) {
+    public void addTxPower(BluetoothDevice device, Double txPower) {
         if (deviceList.contains(device)) {
             hashTxPowerMap.put(device, txPower);
             myRef.child(device.getAddress()).child("tx_power").setValue(txPower);
@@ -82,11 +102,11 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
         holder.deviceName.setText(context.getString(R.string.ble_device_name,device.getName()));
         holder.deviceRssi.setText(context.getString(R.string.ble_rssi,hashRssiMap.get(device)));
         holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(
-                String.valueOf(hashRssiMap.get(device)),
-                String.valueOf(hashTxPowerMap.get(device))))));
+                hashRssiMap.get(device),
+                hashTxPowerMap.get(device)))));
 
-        myRef.child(device.getAddress()).child("distance").setValue(calculateDistance(String.valueOf(hashRssiMap.get(device)),
-                String.valueOf(hashTxPowerMap.get(device))));
+        myRef.child(device.getAddress()).child("distance").setValue(calculateDistance(hashRssiMap.get(device),
+                hashTxPowerMap.get(device)));
 
     }
 
@@ -110,14 +130,14 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
     }
 
 
-    public double calculateDistance(String rssi,String txPower)
+    public double calculateDistance(double rssi,double txPower)
     {
-        if (rssi.equalsIgnoreCase("0") )
+        if ( rssi == 0)
         {
             return -1.0; // if we cannot determine distance, return -1.
         }
 
-        double ratio = Double.parseDouble(rssi) * 1.0 / Double.parseDouble(txPower);
+        double ratio = rssi * 1.0 / txPower;
 
         if (ratio < 1.0)
         {
@@ -125,8 +145,8 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
         }
         else
         {
-            double accuracy = (0.89976) * Math.pow(ratio, 7.7095) + 0.111;;
-            return accuracy;
+            return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
+
         }
     }
 }

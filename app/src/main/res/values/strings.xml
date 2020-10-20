@@ -8,6 +8,6 @@
     <string name="unknown_device">"Bilinmeyen cihaz."</string>
     <string name="search_devices">"Tarama başladı"</string>
     <string name="ble_device_name">%1$s</string>
-    <string name="ble_rssi">RSSI: %1$d</string>
+    <string name="ble_rssi">RSSI: %1$.2f</string>
     <string name="ble_distance">Uzaklık: %1$s m</string>
 </resources>

@@ -152,9 +152,8 @@ public class BeaconListActivity extends AppCompatActivity {
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = wifiManager.getConnectionInfo();
         int numberOfLevels = 5;
-        int distance = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
+        double distance = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
         myRef.child("WiFi").setValue(info.getSSID());
-        myRef.child("WiFi").child("tx_power").setValue(0);
         myRef.child("WiFi").child("rssi").setValue(info.getRssi());
         myRef.child("WiFi").child("distance").setValue(distance);
         Snackbar.make(coordinatorLayout, "Wi-Fi : " + info.getSSID() + ", RSSI Değeri: " + info.getRssi()+", Uzaklık: "+distance+" m", Snackbar.LENGTH_LONG)
@@ -197,7 +196,7 @@ public class BeaconListActivity extends AppCompatActivity {
                     super.onScanResult(callbackType, result);
                     bleDeviceAdapter.addDevice(result.getDevice());
                     bleDeviceAdapter.addRssi(result.getDevice(),result.getRssi());
-                    bleDeviceAdapter.addTxPower(result.getDevice(),result.getTxPower());
+                    bleDeviceAdapter.addTxPower(result.getDevice(), -69.0);
                     bleDeviceAdapter.notifyDataSetChanged();
 
 

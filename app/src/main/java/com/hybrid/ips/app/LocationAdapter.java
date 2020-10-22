@@ -1,13 +1,17 @@
 package com.hybrid.ips.app;
 
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,7 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.ViewHolder> {
+public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHolder> {
     private ArrayList<BluetoothDevice> deviceList;
     private static final String TAG = "BLE_Connection";
     private HashMap<BluetoothDevice, Double> hashRssiMap;
@@ -32,7 +36,7 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
     private static final double KALMAN_R = 0.125d;
     private static final double KALMAN_Q = 0.5d;
 
-    BLEDeviceAdapter(Context context)
+    LocationAdapter(Context context)
     {
         this.context=context;
         deviceList = new ArrayList<BluetoothDevice>();
@@ -40,13 +44,13 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
         hashTxPowerMap = new HashMap<BluetoothDevice, Double>();
         database=FirebaseDatabase.getInstance();
         mKalmanFilters=new HashMap<String,KalmanFilter>();
-        myRef=database.getReference("online_phase/devices/ibeacons");
+        myRef=database.getReference("offline_phase/devices/ibeacons");
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.online_list_devices, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.location_list, parent, false);
         return new ViewHolder(view);
     }
 
@@ -55,14 +59,14 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
         if (!deviceList.contains(device) && device.getName()!=null && device.getName().trim().equals("iTAG"))
         {
             deviceList.add(device);
-            myRef.child(device.getAddress()).setValue(device.getName());
+
 
         }
     }
 
     public void addRssi(BluetoothDevice device, Integer rssi)
     {
-        double smoothedRssi=0;
+        double smoothedRssi;
         if (deviceList.contains(device))
         {
 
@@ -81,7 +85,6 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
 
             Log.i(TAG, "Old Rssi: " + rssi + "Smooth RSSI: " + smoothedRssi);
             hashRssiMap.put(device, smoothedRssi);
-            myRef.child(device.getAddress()).child("rssi").setValue(smoothedRssi);
         }
 
     }
@@ -89,23 +92,65 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
     public void addTxPower(BluetoothDevice device, Double txPower) {
         if (deviceList.contains(device)) {
             hashTxPowerMap.put(device, txPower);
-            myRef.child(device.getAddress()).child("tx_power").setValue(txPower);
+
 
         }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position)
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position)
     {
         final BluetoothDevice device = deviceList.get(position);
+        final String[] locatedArea = new String[1];
 
         holder.deviceName.setText(context.getString(R.string.ble_device_name,device.getName()));
         holder.deviceRssi.setText(context.getString(R.string.ble_rssi,hashRssiMap.get(device)));
         holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(
                 hashRssiMap.get(device),
                 hashTxPowerMap.get(device)))));
-        myRef.child(device.getAddress()).child("distance").setValue(calculateDistance(hashRssiMap.get(device),
-                hashTxPowerMap.get(device)));
+        holder.saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view)
+            {
+
+             AlertDialog.Builder builder = new AlertDialog.Builder(view.getRootView().getContext());
+             builder.setTitle(context.getResources().getString(R.string.whichPosition));
+             builder.setMessage(context.getResources().getString(R.string.dialogPosition));
+             final String[] areas = {"A1", "A2", "A3", "A4", "A5","A6"};
+             builder.setSingleChoiceItems(areas, -1, new DialogInterface.OnClickListener() // Item click listener
+             {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int which) {
+
+                                switch (which) {
+                                    case 0: // A1
+                                        locatedArea[0] = areas[1];
+                                    case 1: // A2
+                                        locatedArea[0] = areas[2];
+                                    case 2: // A3
+                                        locatedArea[0] = areas[3];
+                                    case 3: // A4
+                                        locatedArea[4] = areas[1];
+                                    case 4: // A5
+                                        locatedArea[5] = areas[1];
+                                    case 5: // A5
+                                        locatedArea[6] = areas[1];
+                                }
+                            }
+             });
+             AlertDialog dialog = builder.create();
+             dialog.show();
+
+
+             myRef.child(device.getAddress()).setValue(device.getName());
+             myRef.child(device.getAddress()).child("area").setValue(locatedArea[0]);
+             myRef.child(device.getAddress()).child("rssi").setValue(hashRssiMap.get(device));
+             myRef.child(device.getAddress()).child("tx_power").setValue(hashTxPowerMap.get(device));
+             myRef.child(device.getAddress()).child("distance").setValue(calculateDistance(hashRssiMap.get(device),
+                            hashTxPowerMap.get(device)));
+                }
+        });
+
 
     }
 
@@ -119,12 +164,13 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
         TextView deviceName;
         TextView deviceRssi;
         TextView deviceDistance;
-
+        Button saveButton;
         public ViewHolder(@NonNull View view) {
             super(view);
             deviceRssi = view.findViewById(R.id.device_rssi);
             deviceName = view.findViewById(R.id.device_name);
             deviceDistance = view.findViewById(R.id.device_distance);
+            saveButton=view.findViewById(R.id.saveLocation);
         }
     }
 

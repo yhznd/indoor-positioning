@@ -4,10 +4,22 @@
     <string name="see_location">"See Location"</string>
     <string name="see_ibeacon">"iBeacon List"</string>
     <string name="information">"Info"</string>
-    <string name="ble_not_supported">"BLE bu cihazda desteklenmiyor."</string>
-    <string name="unknown_device">"Bilinmeyen cihaz."</string>
-    <string name="search_devices">"Tarama başladı"</string>
+    <string name="ble_not_supported">"This device does not support BLE feature"</string>
+    <string name="unknown_device">"Unknown device"</string>
+    <string name="search_devices">"Scanning…"</string>
     <string name="ble_device_name">%1$s</string>
     <string name="ble_rssi">RSSI: %1$.2f</string>
-    <string name="ble_distance">Uzaklık: %1$s m</string>
+    <string name="ble_distance">Distance: %1$s m</string>
+    <string name="offline_phase">Offline Phase</string>
+    <string name="online_phase">Online Phase</string>
+    <string name="main">Indoor Positioning with BLE and WiFi Hybrid Technologies</string>
+    <string name="noInternet">There is no internet connection. Please connect.</string>
+    <string name="noWifi">Please connect to WiFi.</string>
+    <string name="whichPosition">Which position are you on?</string>
+    <string name="dialogPosition">Please select your area and after that save it.</string>
+    <string name="offline">You are offline</string>
+    <string name="notPermitted">Location services not permitted for this application.</string>
+    <string name="accessLocation">Access to your location services</string>
+    <string name="accessBLE">Allow access to location services so iBeacon devices can be discovered.</string>
+
 </resources>

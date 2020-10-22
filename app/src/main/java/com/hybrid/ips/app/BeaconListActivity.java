@@ -32,7 +32,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 
-public class BeaconListActivity extends AppCompatActivity {
+public class BeaconListActivity extends AppCompatActivity
+{
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BLUETOOTH = 1;
     private static final String TAG = "BLE_Connection";
@@ -40,11 +41,10 @@ public class BeaconListActivity extends AppCompatActivity {
     private BluetoothLeScanner bluetoothLeScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
     private boolean mScanning;
     private Handler mHandler;
-    public ListView listview;
     private static final long SCAN_PERIOD = 10000;
     private BLEDeviceAdapter bleDeviceAdapter;
     private RecyclerView recyclerView;
-    private ConstraintLayout coordinatorLayout;
+    private ConstraintLayout constraintLayout;
     private FirebaseDatabase database;
     private DatabaseReference myRef;
 
@@ -52,9 +52,9 @@ public class BeaconListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.beacon_activity);
-        coordinatorLayout = (ConstraintLayout) findViewById(R.id.coordinator);
+        constraintLayout = (ConstraintLayout) findViewById(R.id.coordinator);
         database=FirebaseDatabase.getInstance();
-        myRef=database.getReference("devices");
+        myRef=database.getReference("online_phase/devices/WiFi");
         mHandler = new Handler();
         scanButton = findViewById(R.id.scanButton);
 
@@ -66,31 +66,41 @@ public class BeaconListActivity extends AppCompatActivity {
 
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
-        scanButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, R.string.search_devices, Snackbar.LENGTH_SHORT)
-                        .setAction("Action", null).show();
-                scanLeDevice();
-                getWifiInfos();
-            }
+
+
+        scanButton.setOnClickListener(new View.OnClickListener()
+        {
+                @Override
+                public void onClick(View view) {
+                    Snackbar.make(view, R.string.search_devices, Snackbar.LENGTH_SHORT)
+                            .setAction("Action", null).show();
+                    if(isWifiConnected())
+                        getWifiInfos();
+                    scanLeDevice();
+
+                }
         });
 
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE))
+        {
+                Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
         }
 
-        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, PERMISSION_REQUEST_BLUETOOTH);
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled())
+        {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, PERMISSION_REQUEST_BLUETOOTH);
         }
-        if (!isLocationPermissionGranted()) {
-            askLocationPermission();
+        if (!isLocationPermissionGranted())
+        {
+                askLocationPermission();
         }
+
         if (isWifiConnected())
         {
             getWifiInfos();
         }
+
 
 
     }
@@ -105,8 +115,8 @@ public class BeaconListActivity extends AppCompatActivity {
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this
                     );
-                    builder.setTitle("Çevrimdışı");
-                    builder.setMessage("Bu uygulama için konum servislerine erişim izni sağlanmadı.");
+                    builder.setTitle(this.getResources().getString(R.string.offline));
+                    builder.setMessage(this.getResources().getString(R.string.notPermitted));
                     builder.setPositiveButton(android.R.string.ok, null);
                     builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
 
@@ -123,13 +133,13 @@ public class BeaconListActivity extends AppCompatActivity {
     }
 
 
-    public void askLocationPermission() {
+    private void askLocationPermission() {
         // Android M Location Permission check
         if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Konum servislerinize erişim");
-            builder.setMessage("iBeacon cihazlarının keşfedilebilmesi için konum servislerine erişime izin verin. ");
+            builder.setTitle(this.getResources().getString(R.string.accessLocation));
+            builder.setMessage(this.getResources().getString(R.string.accessBLE));
             builder.setPositiveButton(android.R.string.ok, null);
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 public void onDismiss(DialogInterface dialog) {
@@ -143,7 +153,7 @@ public class BeaconListActivity extends AppCompatActivity {
     }
 
 
-    public boolean isLocationPermissionGranted() {
+    private boolean isLocationPermissionGranted() {
         return this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
@@ -153,19 +163,17 @@ public class BeaconListActivity extends AppCompatActivity {
         WifiInfo info = wifiManager.getConnectionInfo();
         int numberOfLevels = 5;
         double distance = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
-        myRef.child("WiFi").setValue(info.getSSID());
-        myRef.child("WiFi").child("rssi").setValue(info.getRssi());
-        myRef.child("WiFi").child("distance").setValue(distance);
-        Snackbar.make(coordinatorLayout, "Wi-Fi : " + info.getSSID() + ", RSSI Değeri: " + info.getRssi()+", Uzaklık: "+distance+" m", Snackbar.LENGTH_LONG)
+        myRef.child(info.getSSID());
+        myRef.child(info.getSSID()).child("rssi").setValue(info.getRssi());
+        myRef.child(info.getSSID()).child("distance").setValue(distance);
+        Snackbar.make(constraintLayout, "SSID : " + info.getSSID() + ", RSSI: " + info.getRssi()+", Distance: "+distance+" m", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
     }
 
-    public boolean isWifiConnected()
+    private boolean isWifiConnected()
     {
-        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
-        return mWifi != null && mWifi.isConnected();
+        ConnectivityManager cm = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        return (cm != null) && (cm.getActiveNetworkInfo() != null) && (cm.getActiveNetworkInfo().getType() == 1);
     }
 
 
@@ -189,7 +197,7 @@ public class BeaconListActivity extends AppCompatActivity {
         }
     }
     // Device scan callback.
-    private ScanCallback leScanCallback =
+     private ScanCallback leScanCallback =
             new ScanCallback() {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
@@ -202,6 +210,9 @@ public class BeaconListActivity extends AppCompatActivity {
 
                 }
             };
+
+
+
 
 
 

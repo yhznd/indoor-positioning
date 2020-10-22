@@ -23,13 +23,16 @@
         android:roundIcon="@drawable/ic_contactless"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".LocationActivity"></activity>
-        <activity android:name=".BeaconListActivity">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".LocationActivity" />
+        <activity android:name=".BeaconListActivity">
+
         </activity>
     </application>
 

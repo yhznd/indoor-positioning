@@ -12,6 +12,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.icu.text.SimpleDateFormat;
+import android.icu.util.Calendar;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -32,6 +34,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Date;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class LocationActivity extends AppCompatActivity
 {
@@ -117,8 +123,8 @@ public class LocationActivity extends AppCompatActivity
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this
                     );
-                    builder.setTitle("Çevrimdışı");
-                    builder.setMessage("Bu uygulama için konum servislerine erişim izni sağlanmadı.");
+                    builder.setTitle(this.getResources().getString(R.string.offline));
+                    builder.setMessage(this.getResources().getString(R.string.notPermitted));
                     builder.setPositiveButton(android.R.string.ok, null);
                     builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
 
@@ -140,8 +146,8 @@ public class LocationActivity extends AppCompatActivity
         if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Konum servislerinize erişim");
-            builder.setMessage("iBeacon cihazlarının keşfedilebilmesi için konum servislerine erişime izin verin. ");
+            builder.setTitle(this.getResources().getString(R.string.accessLocation));
+            builder.setMessage(this.getResources().getString(R.string.accessBLE));
             builder.setPositiveButton(android.R.string.ok, null);
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 public void onDismiss(DialogInterface dialog) {
@@ -165,9 +171,10 @@ public class LocationActivity extends AppCompatActivity
         WifiInfo info = wifiManager.getConnectionInfo();
         int numberOfLevels = 5;
         double distance = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
+        String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
         myRef.child(info.getSSID());
-        myRef.child(info.getSSID()).child("rssi").setValue(info.getRssi());
-        myRef.child(info.getSSID()).child("distance").setValue(distance);
+        myRef.child(info.getSSID()).child(currentDate).child("rssi").setValue(info.getRssi());
+        myRef.child(info.getSSID()).child(currentDate).child("distance").setValue(distance);
         Snackbar.make(constraintLayout, "SSID : " + info.getSSID() + ", RSSI: " + info.getRssi()+", Distance: "+distance+" m", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
     }

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Indoor Positioning</string>
-    <string name="float_button_name">"Ekle"</string>
+    <string name="float_button_name">"Add"</string>
     <string name="see_location">"See Location"</string>
     <string name="see_ibeacon">"iBeacon List"</string>
     <string name="information">"Info"</string>
@@ -15,11 +15,20 @@
     <string name="main">Indoor Positioning with BLE and WiFi Hybrid Technologies</string>
     <string name="noInternet">There is no internet connection. Please connect.</string>
     <string name="noWifi">Please connect to WiFi.</string>
-    <string name="whichPosition">Which position are you on?</string>
-    <string name="dialogPosition">Please select your area and after that save it.</string>
+    <string name="whichPosition">Which area are you standing?</string>
+    <string name="dialogPosition">Please select your area and click OK</string>
     <string name="offline">You are offline</string>
     <string name="notPermitted">Location services not permitted for this application.</string>
     <string name="accessLocation">Access to your location services</string>
     <string name="accessBLE">Allow access to location services so iBeacon devices can be discovered.</string>
-
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string-array name="areas">
+        <item>A1</item>
+        <item>A2</item>
+        <item>A3</item>
+        <item>A4</item>
+        <item>A5</item>
+        <item>A6</item>
+    </string-array>
 </resources>

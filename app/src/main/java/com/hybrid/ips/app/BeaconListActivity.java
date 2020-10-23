@@ -16,6 +16,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;;
+import android.icu.text.SimpleDateFormat;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
@@ -30,6 +31,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Date;
+import java.util.Locale;
 
 
 public class BeaconListActivity extends AppCompatActivity
@@ -163,9 +167,10 @@ public class BeaconListActivity extends AppCompatActivity
         WifiInfo info = wifiManager.getConnectionInfo();
         int numberOfLevels = 5;
         double distance = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
+        String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
         myRef.child(info.getSSID());
-        myRef.child(info.getSSID()).child("rssi").setValue(info.getRssi());
-        myRef.child(info.getSSID()).child("distance").setValue(distance);
+        myRef.child(info.getSSID()).child(currentDate).child("rssi").setValue(info.getRssi());
+        myRef.child(info.getSSID()).child(currentDate).child("distance").setValue(distance);
         Snackbar.make(constraintLayout, "SSID : " + info.getSSID() + ", RSSI: " + info.getRssi()+", Distance: "+distance+" m", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
     }

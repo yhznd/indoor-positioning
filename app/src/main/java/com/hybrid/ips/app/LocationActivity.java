@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -54,27 +55,27 @@ public class LocationActivity extends AppCompatActivity
     private ConstraintLayout constraintLayout;
     private FirebaseDatabase database;
     private DatabaseReference myRef;
+    private TextView scenarioTextView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) 
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.location_activity);
-        constraintLayout = (ConstraintLayout) findViewById(R.id.mainLocationLayout);
+        constraintLayout = findViewById(R.id.mainLocationLayout);
+        scenarioTextView=findViewById(R.id.scenarioTextView);
+        scenarioTextView.setVisibility(View.GONE);
         database=FirebaseDatabase.getInstance();
-        myRef=database.getReference("offline_phase/devices/wifi");
         mHandler = new Handler();
         scanButton = findViewById(R.id.scanLocationButton);
-
-        recyclerView = (RecyclerView) findViewById(R.id.recycleViewLocation);
-        locationAdapter = new LocationAdapter(getApplicationContext());
+        recyclerView = findViewById(R.id.recycleViewLocation);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setAdapter(locationAdapter);
 
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
 
+        askScenario();
 
         scanButton.setOnClickListener(new View.OnClickListener()
         {
@@ -103,13 +104,6 @@ public class LocationActivity extends AppCompatActivity
         {
             askLocationPermission();
         }
-
-        if (isWifiConnected())
-        {
-            getWifiInfos();
-        }
-
-
 
     }
 
@@ -219,4 +213,66 @@ public class LocationActivity extends AppCompatActivity
 
                 }
             };
+
+    private void askScenario()
+    {
+        String[] scenarios = getResources().getStringArray(R.array.scenarios);
+        final String[] choosenScenario = new String[1];
+        final String[] choosenScenarioNumber = new String[1];
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getResources().getString(R.string.whichScenario));
+        int checkedItem=0;
+        builder.setSingleChoiceItems(scenarios, checkedItem, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int which)
+            {
+                switch (which)
+                {
+                    case 0: // sc1
+                        choosenScenario[0]="scenario1";
+                        choosenScenarioNumber[0]="#1";
+                        break;
+                    case 1: // sc2
+                        choosenScenario[0] = "scenario2";
+                        choosenScenarioNumber[0]="#2";
+                        break;
+                    case 2: // sc3
+                        choosenScenario[0] = "scenario3";
+                        choosenScenarioNumber[0]="#3";
+                        break;
+                    case 3: // sc4
+                        choosenScenario[0] = "scenario4";
+                        choosenScenarioNumber[0]="#4";
+                        break;
+                }
+            }
+        });
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i)
+            {
+
+                myRef=database.getReference("offline_phase/devices/wifi/"+choosenScenario[0]);
+                locationAdapter = new LocationAdapter(getApplicationContext(),choosenScenario[0]);
+                recyclerView.setAdapter(locationAdapter);
+                scenarioTextView.setVisibility(View.VISIBLE);
+                scenarioTextView.setText(getResources().getString(R.string.scenario,choosenScenarioNumber[0]));
+                dialogInterface.dismiss();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i)
+            {
+                dialogInterface.dismiss();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
 }

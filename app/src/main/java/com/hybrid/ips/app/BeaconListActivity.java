@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -51,22 +52,24 @@ public class BeaconListActivity extends AppCompatActivity
     private ConstraintLayout constraintLayout;
     private FirebaseDatabase database;
     private DatabaseReference myRef;
-
+    private TextView scenarioTextView;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.beacon_activity);
-        constraintLayout = (ConstraintLayout) findViewById(R.id.coordinator);
+        constraintLayout = findViewById(R.id.coordinator);
         database=FirebaseDatabase.getInstance();
-        myRef=database.getReference("online_phase/devices/WiFi");
         mHandler = new Handler();
         scanButton = findViewById(R.id.scanButton);
+        scenarioTextView=findViewById(R.id.scenarioTextView);
+        scenarioTextView.setVisibility(View.GONE);
 
-        recyclerView = (RecyclerView) findViewById(R.id.recycleView);
-        bleDeviceAdapter = new BLEDeviceAdapter(getApplicationContext());
+        recyclerView = findViewById(R.id.recycleView);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setAdapter(bleDeviceAdapter);
+        askScenario();
+
 
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
@@ -99,13 +102,6 @@ public class BeaconListActivity extends AppCompatActivity
         {
                 askLocationPermission();
         }
-
-        if (isWifiConnected())
-        {
-            getWifiInfos();
-        }
-
-
 
     }
 
@@ -216,6 +212,66 @@ public class BeaconListActivity extends AppCompatActivity
                 }
             };
 
+    private void askScenario()
+    {
+        String[] scenarios = getResources().getStringArray(R.array.scenarios);
+        final String[] choosenScenario = new String[1];
+        final String[] choosenScenarioNumber = new String[1];
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getResources().getString(R.string.whichScenario));
+        int checkedItem=0;
+        builder.setSingleChoiceItems(scenarios, checkedItem, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int which)
+            {
+                switch (which)
+                {
+                    case 0: // sc1
+                        choosenScenario[0]="scenario1";
+                        choosenScenarioNumber[0]="#1";
+                        break;
+                    case 1: // sc2
+                        choosenScenario[0] = "scenario2";
+                        choosenScenarioNumber[0]="#2";
+                        break;
+                    case 2: // sc3
+                        choosenScenario[0] = "scenario3";
+                        choosenScenarioNumber[0]="#3";
+                        break;
+                    case 3: // sc4
+                        choosenScenario[0] = "scenario4";
+                        choosenScenarioNumber[0]="#4";
+                        break;
+                }
+            }
+        });
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i)
+            {
+
+                myRef=database.getReference("online_phase/devices/wifi/"+choosenScenario[0]);
+                bleDeviceAdapter = new BLEDeviceAdapter(getApplicationContext(),choosenScenario[0]);
+                recyclerView.setAdapter(bleDeviceAdapter);
+                scenarioTextView.setVisibility(View.VISIBLE);
+                scenarioTextView.setText(getResources().getString(R.string.scenario,choosenScenarioNumber[0]));
+                dialogInterface.dismiss();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i)
+            {
+                dialogInterface.dismiss();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
 
 
 

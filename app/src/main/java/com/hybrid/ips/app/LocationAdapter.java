@@ -40,8 +40,9 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
     private Context context;
     private static final double KALMAN_R = 0.125d;
     private static final double KALMAN_Q = 0.5d;
+    private String choosenScenario;
 
-    LocationAdapter(Context context)
+    public LocationAdapter(Context context,String scenario)
     {
         this.context=context;
         deviceList = new ArrayList<BluetoothDevice>();
@@ -49,7 +50,8 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
         hashTxPowerMap = new HashMap<BluetoothDevice, Double>();
         database=FirebaseDatabase.getInstance();
         mKalmanFilters=new HashMap<String,KalmanFilter>();
-        myRef=database.getReference("offline_phase/devices/ibeacons");
+        myRef=database.getReference("offline_phase/devices/ibeacons/"+scenario);
+        choosenScenario=scenario;
     }
 
     @NonNull
@@ -118,7 +120,11 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
             @Override
             public void onClick(View view)
             {
-             final String[] areas = context.getResources().getStringArray(R.array.areas);
+                final String[] areas;
+                if(choosenScenario.equals("scenario1") || choosenScenario.equals("scenario4"))
+                    areas = context.getResources().getStringArray(R.array.areas6);
+                else
+                    areas = context.getResources().getStringArray(R.array.areas4);
              int checkedItem=0; //A1;
              AlertDialog.Builder builder = new AlertDialog.Builder(view.getRootView().getContext());
              builder.setTitle(context.getResources().getString(R.string.whichPosition));
@@ -144,7 +150,7 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
                          case 4: // A5
                              locatedArea[0] = areas[4];
                              break;
-                         case 5: // A5
+                         case 5: // A6
                              locatedArea[0] = areas[5];
                              break;
                      }

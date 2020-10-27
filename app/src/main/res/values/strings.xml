@@ -23,7 +23,24 @@
     <string name="accessBLE">Allow access to location services so iBeacon devices can be discovered.</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string-array name="areas">
+    <string name="whichScenario">Please select a scenario</string>
+    <string name="scenario">Scenario %1$s</string>
+
+    <string-array name="scenarios">
+        <item>Scenario 1: 6 BLE Device, 6 Area</item>
+        <item>Scenario 2: 6 BLE Device, 4 Area</item>
+        <item>Scenario 3: 4 BLE Device, 4 Area</item>
+        <item>Scenario 4: 4 BLE Device, 6 Area</item>
+    </string-array>
+
+    <string-array name="areas4">
+        <item>A1</item>
+        <item>A2</item>
+        <item>A3</item>
+        <item>A4</item>
+    </string-array>
+
+    <string-array name="areas6">
         <item>A1</item>
         <item>A2</item>
         <item>A3</item>

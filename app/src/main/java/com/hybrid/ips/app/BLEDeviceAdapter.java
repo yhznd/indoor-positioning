@@ -3,6 +3,7 @@ package com.hybrid.ips.app;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.icu.text.SimpleDateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +17,9 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 
 
 public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.ViewHolder> {
@@ -32,7 +35,7 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
     private static final double KALMAN_R = 0.125d;
     private static final double KALMAN_Q = 0.5d;
 
-    BLEDeviceAdapter(Context context)
+    public BLEDeviceAdapter(Context context,String scenario)
     {
         this.context=context;
         deviceList = new ArrayList<BluetoothDevice>();
@@ -40,7 +43,7 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
         hashTxPowerMap = new HashMap<BluetoothDevice, Double>();
         database=FirebaseDatabase.getInstance();
         mKalmanFilters=new HashMap<String,KalmanFilter>();
-        myRef=database.getReference("online_phase/devices/ibeacons");
+        myRef=database.getReference("online_phase/devices/ibeacons/"+scenario);
     }
 
     @NonNull
@@ -55,7 +58,7 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
         if (!deviceList.contains(device) && device.getName()!=null && device.getName().trim().equals("iTAG"))
         {
             deviceList.add(device);
-            myRef.child(device.getAddress()).setValue(device.getName());
+            myRef.child(device.getAddress()).child(getCurrentDate()).setValue(device.getName());
 
         }
     }
@@ -81,7 +84,7 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
 
             Log.i(TAG, "Old Rssi: " + rssi + "Smooth RSSI: " + smoothedRssi);
             hashRssiMap.put(device, smoothedRssi);
-            myRef.child(device.getAddress()).child("rssi").setValue(smoothedRssi);
+            myRef.child(device.getAddress()).child(getCurrentDate()).child("rssi").setValue(smoothedRssi);
         }
 
     }
@@ -89,7 +92,7 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
     public void addTxPower(BluetoothDevice device, Double txPower) {
         if (deviceList.contains(device)) {
             hashTxPowerMap.put(device, txPower);
-            myRef.child(device.getAddress()).child("tx_power").setValue(txPower);
+            myRef.child(device.getAddress()).child(getCurrentDate()).child("tx_power").setValue(txPower);
 
         }
     }
@@ -104,7 +107,7 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
         holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(
                 hashRssiMap.get(device),
                 hashTxPowerMap.get(device)))));
-        myRef.child(device.getAddress()).child("distance").setValue(calculateDistance(hashRssiMap.get(device),
+        myRef.child(device.getAddress()).child(getCurrentDate()).child("distance").setValue(calculateDistance(hashRssiMap.get(device),
                 hashTxPowerMap.get(device)));
 
     }
@@ -147,5 +150,10 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
             return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
 
         }
+    }
+
+    private String getCurrentDate()
+    {
+        return new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
     }
 }

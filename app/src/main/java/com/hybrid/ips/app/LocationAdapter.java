@@ -112,9 +112,9 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
 
         holder.deviceName.setText(context.getString(R.string.ble_device_name,device.getName()));
         holder.deviceRssi.setText(context.getString(R.string.ble_rssi,hashRssiMap.get(device)));
-        holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(
+        /*holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(
                 hashRssiMap.get(device),
-                hashTxPowerMap.get(device)))));
+                hashTxPowerMap.get(device)))));*/
         holder.saveButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -125,9 +125,10 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
                     areas = context.getResources().getStringArray(R.array.areas6);
                 else
                     areas = context.getResources().getStringArray(R.array.areas4);
-             int checkedItem=0; //A1;
+
              AlertDialog.Builder builder = new AlertDialog.Builder(view.getRootView().getContext());
              builder.setTitle(context.getResources().getString(R.string.whichPosition));
+             int checkedItem=-1;
              builder.setSingleChoiceItems(areas, checkedItem, new DialogInterface.OnClickListener()
              {
                  @Override
@@ -167,8 +168,8 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
                         myRef.child(device.getAddress()).child(currentDate).child("area").setValue(locatedArea[0]);
                         myRef.child(device.getAddress()).child(currentDate).child("rssi").setValue(hashRssiMap.get(device));
                         myRef.child(device.getAddress()).child(currentDate).child("tx_power").setValue(hashTxPowerMap.get(device));
-                        myRef.child(device.getAddress()).child(currentDate).child("distance").setValue(calculateDistance(hashRssiMap.get(device),
-                                hashTxPowerMap.get(device)));
+                       /* myRef.child(device.getAddress()).child(currentDate).child("distance").setValue(calculateDistance(hashRssiMap.get(device),
+                                hashTxPowerMap.get(device)));*/
                         dialogInterface.dismiss();
                     }
              });
@@ -203,13 +204,13 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
             super(view);
             deviceRssi = view.findViewById(R.id.device_rssi);
             deviceName = view.findViewById(R.id.device_name);
-            deviceDistance = view.findViewById(R.id.device_distance);
+            //deviceDistance = view.findViewById(R.id.device_distance);
             saveButton=view.findViewById(R.id.saveLocation);
         }
     }
 
 
-    public double calculateDistance(double rssi,double txPower)
+    /*public double calculateDistance(double rssi,double txPower)
     {
         if ( rssi == 0)
         {
@@ -227,5 +228,5 @@ public class LocationAdapter extends RecyclerView.Adapter<LocationAdapter.ViewHo
             return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
 
         }
-    }
+    }*/
 }

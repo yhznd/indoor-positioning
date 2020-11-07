@@ -166,8 +166,8 @@ public class BeaconListActivity extends AppCompatActivity
         String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
         myRef.child(info.getSSID());
         myRef.child(info.getSSID()).child(currentDate).child("rssi").setValue(info.getRssi());
-        myRef.child(info.getSSID()).child(currentDate).child("distance").setValue(distance);
-        Snackbar.make(constraintLayout, "SSID : " + info.getSSID() + ", RSSI: " + info.getRssi()+", Distance: "+distance+" m", Snackbar.LENGTH_LONG)
+        //myRef.child(info.getSSID()).child(currentDate).child("distance").setValue(distance);
+        Snackbar.make(constraintLayout, "SSID : " + info.getSSID() + ", RSSI: " + info.getRssi(), Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show();
     }
 
@@ -219,7 +219,7 @@ public class BeaconListActivity extends AppCompatActivity
         final String[] choosenScenarioNumber = new String[1];
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getResources().getString(R.string.whichScenario));
-        int checkedItem=0;
+        int checkedItem=-1;
         builder.setSingleChoiceItems(scenarios, checkedItem, new DialogInterface.OnClickListener()
         {
             @Override

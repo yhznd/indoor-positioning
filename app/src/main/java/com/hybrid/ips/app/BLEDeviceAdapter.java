@@ -75,14 +75,12 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
                 // This will give you a smoothed RSSI value because 'x == lastRssi'
                 smoothedRssi = mKalman.applyFilter(rssi);
 
-                // Do what you want with this rssi
             } else {
                 KalmanFilter mKalman = new KalmanFilter(KALMAN_R, KALMAN_Q);
                 smoothedRssi = mKalman.applyFilter(rssi);
                 mKalmanFilters.put(device.getAddress(), mKalman);
             }
 
-            Log.i(TAG, "Old Rssi: " + rssi + "Smooth RSSI: " + smoothedRssi);
             hashRssiMap.put(device, smoothedRssi);
             myRef.child(device.getAddress()).child(getCurrentDate()).child("rssi").setValue(smoothedRssi);
         }
@@ -104,11 +102,11 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
 
         holder.deviceName.setText(context.getString(R.string.ble_device_name,device.getName()));
         holder.deviceRssi.setText(context.getString(R.string.ble_rssi,hashRssiMap.get(device)));
-        holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(
+        /*holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(
                 hashRssiMap.get(device),
                 hashTxPowerMap.get(device)))));
         myRef.child(device.getAddress()).child(getCurrentDate()).child("distance").setValue(calculateDistance(hashRssiMap.get(device),
-                hashTxPowerMap.get(device)));
+                hashTxPowerMap.get(device)));*/
 
     }
 
@@ -127,12 +125,12 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
             super(view);
             deviceRssi = view.findViewById(R.id.device_rssi);
             deviceName = view.findViewById(R.id.device_name);
-            deviceDistance = view.findViewById(R.id.device_distance);
+            //deviceDistance = view.findViewById(R.id.device_distance);
         }
     }
 
 
-    public double calculateDistance(double rssi,double txPower)
+   /* public double calculateDistance(double rssi,double txPower)
     {
         if ( rssi == 0)
         {
@@ -150,7 +148,7 @@ public class BLEDeviceAdapter extends RecyclerView.Adapter<BLEDeviceAdapter.View
             return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
 
         }
-    }
+    }*/
 
     private String getCurrentDate()
     {

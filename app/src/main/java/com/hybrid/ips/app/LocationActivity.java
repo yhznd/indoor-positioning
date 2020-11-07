@@ -221,7 +221,7 @@ public class LocationActivity extends AppCompatActivity
         final String[] choosenScenarioNumber = new String[1];
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getResources().getString(R.string.whichScenario));
-        int checkedItem=0;
+        int checkedItem=-1;
         builder.setSingleChoiceItems(scenarios, checkedItem, new DialogInterface.OnClickListener()
         {
             @Override

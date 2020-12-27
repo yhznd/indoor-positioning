@@ -1,4 +1,4 @@
-package com.hybrid.ips.app;
+package com.hybrid.ips.app.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -12,6 +12,10 @@ import android.view.View;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.hybrid.ips.app.R;
+
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -19,6 +23,7 @@ public class MainActivity extends AppCompatActivity
     private FloatingActionButton fbOnline;
     private FloatingActionButton fbOffline;
     private ConstraintLayout constraintLayout;
+    private Realm realm;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -27,13 +32,23 @@ public class MainActivity extends AppCompatActivity
         constraintLayout = (ConstraintLayout) findViewById(R.id.mainConstraint);
         fbOnline=findViewById(R.id.floatingActionButtonOnline);
         fbOffline=findViewById(R.id.floatingActionButtonOffline);
+        Realm.init(this);
+        RealmConfiguration config = new RealmConfiguration
+                .Builder()
+                .deleteRealmIfMigrationNeeded()
+                .build();
+
+        RealmConfiguration realmConfiguration = new RealmConfiguration.Builder().build();
+        //Realm.deleteRealm(realmConfiguration);
+        realm = Realm.getInstance(realmConfiguration);
+
 
         fbOnline.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view)
             {
-                Intent onlineActivity=new Intent(MainActivity.this,BeaconListActivity.class);
-                startActivity(onlineActivity);
+                //Intent onlineActivity=new Intent(MainActivity.this,BeaconListActivity.class);
+                //startActivity(onlineActivity);
             }
         });
 
@@ -41,10 +56,11 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view)
             {
-                Intent offlineActivity=new Intent(MainActivity.this,LocationActivity.class);
+                Intent offlineActivity=new Intent(MainActivity.this, DevicePositionActivity.class);
                 startActivity(offlineActivity);
             }
         });
+
 
         if(isInternetConnected())
         {

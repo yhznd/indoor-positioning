@@ -6,14 +6,17 @@
     <string name="information">"Info"</string>
     <string name="ble_not_supported">"This device does not support BLE feature"</string>
     <string name="unknown_device">"Unknown device"</string>
+    <string name="dialog_message">Do you need new ID?</string>
+    <string name="dialog_title">New measurement?</string>
     <string name="search_devices">"Scanning…"</string>
     <string name="ble_device_name">%1$s</string>
+    <string name="ble_coordinates">X:%1$.1f Y:%2$.1f</string>
     <string name="ble_rssi">RSSI: %1$.2f</string>
-    <string name="ble_distance">Distance: %1$s m</string>
-    <string name="offline_phase">Offline Phase</string>
-    <string name="online_phase">Online Phase</string>
+    <string name="ble_distance">D:%1$s m</string>
+    <string name="set_location_phase">Set Location</string>
+    <string name="set_device_phase">Device Position</string>
     <string name="main">Indoor Positioning with BLE and WiFi Hybrid Technologies</string>
-    <string name="noInternet">There is no internet connection. Please connect.</string>
+    <string name="noInternet">There is no internet connection. Please connect and restart the app.</string>
     <string name="noWifi">Please connect to WiFi.</string>
     <string name="whichPosition">Which area are you standing?</string>
     <string name="dialogPosition">Please select your area and click OK</string>
@@ -25,12 +28,9 @@
     <string name="cancel">Cancel</string>
     <string name="whichScenario">Please select a scenario</string>
     <string name="scenario">Scenario %1$s</string>
-
+    <string name="title_activity_maps">Map</string>
     <string-array name="scenarios">
-        <item>Scenario 1: 6 BLE Device, 6 Area</item>
-        <item>Scenario 2: 6 BLE Device, 4 Area</item>
-        <item>Scenario 3: 4 BLE Device, 4 Area</item>
-        <item>Scenario 4: 4 BLE Device, 6 Area</item>
+        <item>Scenario 1: 6 BLE Device</item>
     </string-array>
 
     <string-array name="areas4">
@@ -48,4 +48,31 @@
         <item>A5</item>
         <item>A6</item>
     </string-array>
+    <string-array name="areas">
+        <item>A1</item>
+        <item>A2</item>
+        <item>A3</item>
+        <item>A4</item>
+        <item>A5</item>
+        <item>A6</item>
+        <item>A7</item>
+        <item>A8</item>
+        <item>A9</item>
+        <item>A10</item>
+        <item>A11</item>
+        <item>A12</item>
+        <item>A13</item>
+        <item>A14</item>
+        <item>A15</item>
+        <item>A16</item>
+        <item>A17</item>
+        <item>A18</item>
+        <item>A19</item>
+        <item>A20</item>
+        <item>A21</item>
+        <item>A22</item>
+
+
+    </string-array>
+
 </resources>

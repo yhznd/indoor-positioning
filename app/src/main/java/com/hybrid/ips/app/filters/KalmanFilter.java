@@ -1,4 +1,4 @@
-package com.hybrid.ips.app;
+package com.hybrid.ips.app.filters;
 
 import java.io.Serializable;
 

@@ -19,24 +19,16 @@
             android:background="@android:color/darker_gray"
             android:layout_width="0dp">
 
-            <ImageView
-                android:id="@+id/cardView"
-                android:layout_width="100dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.09"
-                android:background="@color/colorPrimaryDark"
-                app:srcCompat="@drawable/ic_baseline_bluetooth_24" />
-
             <TextView
                 android:id="@+id/device_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="Device"
-                android:layout_weight="0.33"
+                android:text="MAC"
+                android:layout_weight="0.25"
                 android:textColor="@color/colorWhite"
                 android:textAlignment="center"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/device_rssi"
@@ -47,9 +39,9 @@
                 android:layout_weight="0.33"
                 android:textColor="@color/colorWhite"
                 android:textAlignment="center"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
 
-            <!--<TextView
+            <TextView
                 android:id="@+id/device_distance"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -58,11 +50,23 @@
                 android:layout_weight="0.33"
                 android:textColor="@color/colorWhite"
                 android:textAlignment="center"
-                android:textSize="15sp" />-->
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/device_coordinates"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="x,y"
+                android:layout_weight="0.31"
+                android:textColor="@color/colorWhite"
+                android:textAlignment="center"
+                android:textSize="13sp" />
+
         </LinearLayout>
 
         <LinearLayout
-            android:layout_weight="0.3"
+            android:layout_weight="0.2"
             android:layout_height="fill_parent"
             android:divider="?android:listDivider"
             android:dividerPadding="2.5dp"

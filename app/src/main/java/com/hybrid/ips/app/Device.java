@@ -7,6 +7,7 @@ import io.realm.annotations.PrimaryKey;
 public class Device extends RealmObject
 {
     @PrimaryKey
+    String id;
     String UUID;
     String macAddres;
     Double distance;
@@ -14,6 +15,14 @@ public class Device extends RealmObject
     Double y;
     Double rssi;
     String createdAt;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getUUID() {
         return UUID;
@@ -67,17 +76,14 @@ public class Device extends RealmObject
         return createdAt;
     }
 
-    public void setCreated(String createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
-
-    public Device()
-    {
-
+    public Device() {
     }
-    public Device(String UUID, String macAddres, Double distance, Double x, Double y, Double rssi, String createdAt)
-    {
+
+    public Device(String UUID, String macAddres, Double distance, Double x, Double y, Double rssi, String createdAt) {
         this.UUID = UUID;
         this.macAddres = macAddres;
         this.distance = distance;

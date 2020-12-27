@@ -33,13 +33,8 @@ public class MainActivity extends AppCompatActivity
         fbOnline=findViewById(R.id.floatingActionButtonOnline);
         fbOffline=findViewById(R.id.floatingActionButtonOffline);
         Realm.init(this);
-        RealmConfiguration config = new RealmConfiguration
-                .Builder()
-                .deleteRealmIfMigrationNeeded()
-                .build();
-
-        RealmConfiguration realmConfiguration = new RealmConfiguration.Builder().build();
-        //Realm.deleteRealm(realmConfiguration);
+        RealmConfiguration realmConfiguration = new RealmConfiguration.Builder().allowWritesOnUiThread(true).build();
+        Realm.deleteRealm(realmConfiguration);
         realm = Realm.getInstance(realmConfiguration);
 
 

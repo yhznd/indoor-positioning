@@ -33,11 +33,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.hybrid.ips.app.Device;
 import com.hybrid.ips.app.R;
 import com.hybrid.ips.app.adapter.DevicePositionAdapter;
@@ -49,12 +44,13 @@ import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 
 import io.realm.Realm;
+import io.realm.RealmResults;
+import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 
 public class DevicePositionActivity extends AppCompatActivity
 {
@@ -70,10 +66,8 @@ public class DevicePositionActivity extends AppCompatActivity
     private DevicePositionAdapter devicePositionAdapter;
     private RecyclerView recyclerView;
     private ConstraintLayout constraintLayout;
-    private String firebaseId;
-    private ArrayList<Double> x_coordinateList=new ArrayList<>();
-    private ArrayList<Double> y_coordinateList=new ArrayList<>();
-    private ArrayList<Double> distanceList=new ArrayList<>();
+    private String fId;
+    private Realm realm;
 
 
     @Override
@@ -126,8 +120,7 @@ public class DevicePositionActivity extends AppCompatActivity
             @Override
             public void onClick(View view)
             {
-                if (x_coordinateList.size()!=0 && y_coordinateList.size()!=0 && distanceList.size()!=0)
-                    determineLocation();
+                determineLocation();
             }
         });
 
@@ -212,41 +205,39 @@ public class DevicePositionActivity extends AppCompatActivity
         final double distance = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
 
-        final Device device=new Device(firebaseId,info.getMacAddress(),distance,4.55,0.0,(double)info.getRssi(),currentDate);
+        final Device device=new Device(fId,info.getMacAddress(),distance,4.55,0.0,(double)info.getRssi(),currentDate);
+        realm = Realm.getDefaultInstance();
+        realm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(Realm bgRealm)
+            {
+                try
+                {
+                    Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
+                    device1.setUUID(fId);
+                    device1.setMacAddres(device.getMacAddres());
+                    device1.setDistance(distance);
+                    device1.setX(4.55);
+                    device1.setY(0.0);
+                    device1.setRssi(device.getRssi());
+                    device1.setCreatedAt(currentDate);
+                    Snackbar.make(constraintLayout, "SSID : " + device.getMacAddres() +
+                                    ", RSSI: " + device.getRssi()+
+                                    ", Distance: "+device.getDistance()+" m",
+                            Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                    Toast.makeText(DevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_LONG).show();
+                }
+                catch (RealmPrimaryKeyConstraintException ex)
+                {
+                    Toast.makeText(DevicePositionActivity.this,"Wifi information alreayd exists for this ID!",Toast.LENGTH_SHORT).show();
 
-        Snackbar.make(constraintLayout, "SSID : " + info.getSSID() +
-                        ", RSSI: " + info.getRssi()+
-                        ", Distance: "+distance+" m",
-                Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
+                }
 
-        Realm realm = Realm.getDefaultInstance();
-        realm.executeTransactionAsync(new Realm.Transaction()
-        {
-            @Override
-            public void execute(Realm bgRealm) {
-                Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
-                device1.setMacAddres(device.getMacAddres());
-                device1.setDistance(distance);
-                device1.setX(4.55);
-                device1.setY(0.0);
-                device1.setRssi(device.getRssi());
-                device1.setCreated(currentDate);
-            }
-        }, new Realm.Transaction.OnSuccess()
-        {
-            @Override
-            public void onSuccess() {
-                // Transaction was a success.
-                Toast.makeText(DevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_LONG).show();
-            }
-        }, new Realm.Transaction.OnError() {
-            @Override
-            public void onError(Throwable error) {
-                // Transaction failed and was automatically canceled.
-                System.out.print(error.getMessage());
+
             }
         });
+
 
     }
 
@@ -302,47 +293,28 @@ public class DevicePositionActivity extends AppCompatActivity
     public void determineLocation()
     {
         createNewUUID();
-        Log.d("Alo size", String.valueOf(x_coordinateList.size()));
-        Log.d("Alo size", String.valueOf(y_coordinateList.size()));
+        realm = Realm.getDefaultInstance();
+        RealmResults<Device> devices=realm.where(Device.class).findAll();
+        int size=devices.size();
+        double[][] positions = new double[size][size];
+        double[] distances = new double[size];
 
-        double[] x_positions = new double[x_coordinateList.size()];
-        double[] y_positions = new double[y_coordinateList.size()];
-        double[][] positions = new double[x_coordinateList.size()][y_coordinateList.size()];
-        double[] distances = new double[distanceList.size()];
-
-        for(int i=0;i<x_positions.length;i++) //X
+        for(int i=0;i<size;i++)
         {
-            x_positions[i]= x_coordinateList.get(i);
-            Log.d("Alo", String.valueOf(x_positions[i]));
-
+            positions[i][0] = devices.get(i).getX();
+            positions[0][i] = devices.get(i).getY();
         }
 
-        for(int i=0;i<y_positions.length;i++)  //Y
+        for(int i=0;i<size;i++)
         {
-            y_positions[i]= y_coordinateList.get(i);
-            Log.d("Alo", String.valueOf(y_positions[i]));
+            distances[i] = devices.get(i).getDistance();
         }
-        for (int i = 0; i < positions.length; i++)
-        {
-            positions[i][0] = x_positions[i];
-            positions[0][i] = y_positions[i];
-        }
-
-        for(int i=0;i<distances.length;i++) //Distance
-        {
-            distances[i]= distanceList.get(i);
-        }
-
-
         try
         {
             NonLinearLeastSquaresSolver solver = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances), new LevenbergMarquardtOptimizer());
             LeastSquaresOptimizer.Optimum optimum = solver.solve();
             double[] centroid = optimum.getPoint().toArray();
             Toast.makeText(this, "X:"+df2.format(centroid[0])+" Y:"+df2.format(centroid[1]),Toast.LENGTH_LONG).show();
-            x_coordinateList.clear();
-            y_coordinateList.clear();
-            distanceList.clear();
         }
         catch (IllegalArgumentException ex)
         {
@@ -351,30 +323,20 @@ public class DevicePositionActivity extends AppCompatActivity
 
         }
 
-
     }
 
 
     private void createNewUUID()
     {
-        firebaseId = UUID.randomUUID().toString();
+        fId = UUID.randomUUID().toString();
         SharedPreferences pref = getSharedPreferences("KEY", 0); // 0 - for private mode
         SharedPreferences.Editor editor = pref.edit();
-        editor.putString("UUID", firebaseId); // Storing string
+        editor.putString("UUID", fId); // Storing string
         editor.apply();
         Toast.makeText(this, "New ID created", Toast.LENGTH_SHORT).show();
     }
 
-    public void assignVariables(Device device)
-    {
-        if (device!=null)
-        {
-            x_coordinateList.add(device.getX());
-            y_coordinateList.add(device.getY());
-            distanceList.add(device.getDistance());
-        }
 
-    }
 
 
 }

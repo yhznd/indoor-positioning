@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.hybrid.ips.app.Device;
+import com.hybrid.ips.app.activity.DevicePositionActivity;
 import com.hybrid.ips.app.filters.KalmanFilter;
 import com.hybrid.ips.app.R;
 
@@ -33,6 +34,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import io.realm.Realm;
+import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 
 
 public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAdapter.ViewHolder> {
@@ -43,7 +45,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
     private HashMap<String, KalmanFilter> mKalmanFilters;
     private DecimalFormat df2 = new DecimalFormat("#.###");
     private FirebaseDatabase database;
-    private DatabaseReference myRef;
+    private Realm realm;
     private Context context;
     private static final double KALMAN_R = 0.125d;
     private static final double KALMAN_Q = 0.5d;
@@ -123,51 +125,43 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
         holder.saveButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
-            public void onClick(View view)
-            {
+            public void onClick(View view) {
 
                 SharedPreferences pref = context.getSharedPreferences("KEY", 0);
-                String id=pref.getString("UUID", "not defined"); // getting UUID
-                myRef=database.getReference("device_positions/devices/beacons/"+id);
-                final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
-                String macAddress=device.getAddress();
-                final double distance=calculateDistance(hashRssiMap.get(device), hashTxPowerMap.get(device));
-                final double x= determineX(device.getAddress());
-                final double y= determineY(device.getAddress());
-                final double rssi =hashRssiMap.get(device);
+                final String fId = pref.getString("UUID", "not defined"); // getting UUID
+                String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
+                String macAddress = device.getAddress();
+                double distance = calculateDistance(hashRssiMap.get(device), hashTxPowerMap.get(device));
+                double x = determineX(device.getAddress());
+                double y = determineY(device.getAddress());
+                double rssi = hashRssiMap.get(device);
 
-                Device deviceBLE=new Device(id,macAddress, distance, x, y, rssi,currentDate);
-                Realm realm = Realm.getDefaultInstance();
-                realm.executeTransactionAsync(new Realm.Transaction()
-                {
+                final Device deviceBLE = new Device(fId, macAddress, distance, x, y, rssi, currentDate);
+                realm = Realm.getDefaultInstance();
+                realm.executeTransaction(new Realm.Transaction() {
                     @Override
                     public void execute(Realm bgRealm) {
-                        Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
-                        device1.setMacAddres(device.getAddress());
-                        device1.setDistance(distance);
-                        device1.setX(x);
-                        device1.setY(y);
-                        device1.setRssi(rssi);
-                        device1.setCreated(currentDate);
-                    }
-                }, new Realm.Transaction.OnSuccess()
-                {
-                    @Override
-                    public void onSuccess() {
-                        // Transaction was a success.
-                        Toast.makeText(context,device.getAddress()+" saved!",Toast.LENGTH_SHORT).show();
-                    }
-                }, new Realm.Transaction.OnError() {
-                    @Override
-                    public void onError(Throwable error) {
-                        // Transaction failed and was automatically canceled.
-                        System.out.print(error.getMessage());
+                        try {
+                            Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
+                            device1.setUUID(fId);
+                            device1.setMacAddres(deviceBLE.getMacAddres());
+                            device1.setDistance(deviceBLE.getDistance());
+                            device1.setX(deviceBLE.getX());
+                            device1.setY(deviceBLE.getY());
+                            device1.setRssi(deviceBLE.getRssi());
+                            device1.setCreatedAt(deviceBLE.getCreatedAt());
+                            Toast.makeText(context, device.getAddress() + " saved!", Toast.LENGTH_SHORT).show();
+                        } catch (RealmPrimaryKeyConstraintException ex) {
+                            Toast.makeText(context, "BLE information alreayd exists for this ID!", Toast.LENGTH_SHORT).show();
+
+                        }
+
                     }
                 });
 
-               }
+            }
          });
-        
+
     }
 
     @Override

@@ -9,6 +9,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -20,25 +22,27 @@ import io.realm.RealmConfiguration;
 public class MainActivity extends AppCompatActivity
 {
 
-    private FloatingActionButton fbOnline;
-    private FloatingActionButton fbOffline;
+    private FloatingActionButton fbDevicePosition;
+    private FloatingActionButton fbSeeLocation;
     private ConstraintLayout constraintLayout;
     private Realm realm;
+    private RealmConfiguration realmConfiguration;
+    private ImageView view;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         constraintLayout = (ConstraintLayout) findViewById(R.id.mainConstraint);
-        fbOnline=findViewById(R.id.floatingActionButtonOnline);
-        fbOffline=findViewById(R.id.floatingActionButtonOffline);
+        fbDevicePosition=findViewById(R.id.devicePositionButton);
+        fbSeeLocation=findViewById(R.id.seeLocationButton);
+        view=findViewById(R.id.bleIcon);
         Realm.init(this);
-        RealmConfiguration realmConfiguration = new RealmConfiguration.Builder().allowWritesOnUiThread(true).build();
-        Realm.deleteRealm(realmConfiguration);
+        realmConfiguration = new RealmConfiguration.Builder().allowWritesOnUiThread(true).build();
         realm = Realm.getInstance(realmConfiguration);
 
 
-        fbOnline.setOnClickListener(new View.OnClickListener() {
+        fbSeeLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view)
             {
@@ -47,25 +51,36 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        fbOffline.setOnClickListener(new View.OnClickListener() {
+        fbDevicePosition.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view)
             {
-                Intent offlineActivity=new Intent(MainActivity.this, DevicePositionActivity.class);
-                startActivity(offlineActivity);
+                Intent devicePositionActivity=new Intent(MainActivity.this, DevicePositionActivity.class);
+                startActivity(devicePositionActivity);
+            }
+        });
+
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view)
+            {
+                realm.close();
+                Realm.deleteRealm(realmConfiguration);
+                realm = Realm.getInstance(realmConfiguration);
+                Toast.makeText(MainActivity.this,"DB deleted",Toast.LENGTH_SHORT).show();
             }
         });
 
 
         if(isInternetConnected())
         {
-            fbOnline.setVisibility(View.VISIBLE);
-            fbOffline.setVisibility(View.VISIBLE);
+            fbDevicePosition.setVisibility(View.VISIBLE);
+            fbSeeLocation.setVisibility(View.VISIBLE);
         }
         else
         {
-            fbOnline.setVisibility(View.GONE);
-            fbOffline.setVisibility(View.GONE);
+            fbDevicePosition.setVisibility(View.GONE);
+            fbSeeLocation.setVisibility(View.GONE);
             Snackbar.make(constraintLayout,R.string.noInternet, Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }

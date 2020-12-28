@@ -8,7 +8,7 @@
     tools:context=".activity.MainActivity">
 
     <TextView
-        android:id="@+id/textViewOnline"
+        android:id="@+id/devicePosition"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/set_device_phase"
@@ -22,10 +22,10 @@
         app:layout_constraintVertical_bias="0.717" />
 
     <TextView
-        android:id="@+id/textViewOffline"
+        android:id="@+id/seeLocation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/set_location_phase"
+        android:text="@string/see_location_phase"
         android:textColor="@color/colorPrimary"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -36,35 +36,35 @@
         app:layout_constraintVertical_bias="0.717" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButtonOffline"
+        android:id="@+id/devicePositionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
         app:backgroundTint="@android:color/holo_orange_dark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.245"
+        app:layout_constraintHorizontal_bias="0.191"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewOnline"
+        app:layout_constraintTop_toBottomOf="@+id/devicePosition"
         app:layout_constraintVertical_bias="0.208"
         app:srcCompat="@drawable/ic_arrow" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButtonOnline"
+        android:id="@+id/seeLocationButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
         app:backgroundTint="@android:color/holo_orange_light"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.856"
+        app:layout_constraintHorizontal_bias="0.873"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewOffline"
+        app:layout_constraintTop_toBottomOf="@+id/seeLocation"
         app:layout_constraintVertical_bias="0.208"
         app:srcCompat="@drawable/ic_arrow" />
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/bleIcon"
         android:layout_width="237dp"
         android:layout_height="168dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -86,6 +86,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView"
+        app:layout_constraintTop_toBottomOf="@+id/bleIcon"
         app:layout_constraintVertical_bias="0.07" />
 </androidx.constraintlayout.widget.ConstraintLayout>

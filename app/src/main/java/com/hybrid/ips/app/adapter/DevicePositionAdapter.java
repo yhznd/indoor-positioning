@@ -112,7 +112,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final ViewHolder holder, int position)
+    public void onBindViewHolder(@NonNull final ViewHolder holder, final int position)
     {
         final BluetoothDevice device = deviceList.get(position);
         holder.deviceMac.setText(context.getString(R.string.ble_device_name,device.getAddress()));
@@ -125,7 +125,8 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
         holder.saveButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
-            public void onClick(View view) {
+            public void onClick(View view)
+            {
 
                 SharedPreferences pref = context.getSharedPreferences("KEY", 0);
                 final String fId = pref.getString("UUID", "not defined"); // getting UUID
@@ -159,6 +160,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
                     }
                 });
 
+                removeAt(position);
             }
          });
 
@@ -210,17 +212,17 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
     public double determineX(String deviceAddress)
     {
         double x = 0.0;
-        if(deviceAddress.trim().equals("FF:FF:9C:08:A1:80")) //iBeacon1-origin
+        if(deviceAddress.trim().equals("FF:FF:49:A2:8D:81")) //iBeacon1-origin
             x=0.0;
         else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:C8")) //iBeacon2
             x=2.4;
-        else if(deviceAddress.trim().equals("FF:FF:49:A2:8D:81")) //iBeacon3
+        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon3
             x=2.5;
-        else if(deviceAddress.trim().equals("FF:FF:AA:AA:00:4A:AE")) //iBeacon4
+        else if(deviceAddress.trim().equals("FF:FF:25:1C:CD:80")) //iBeacon4
             x=2.5;
-        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon5
+        else if(deviceAddress.trim().equals("FF:FF:9C:08:A1:80")) //iBeacon5
             x=6.6;
-        else if(deviceAddress.trim().equals("FF:FF:25:1C:CD:80")) //iBeacon6
+        else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:AE")) //iBeacon6
             x=6.6;
 
         return  x;
@@ -229,19 +231,26 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
     public double determineY(String deviceAddress)
     {
         double y = 0.0;
-        if(deviceAddress.equals("FF:FF:9C:08:A1:80")) //iBeacon1-origin
+        if(deviceAddress.trim().equals("FF:FF:49:A2:8D:81")) //iBeacon1-origin
             y=0.0;
-        else if(deviceAddress.equals("FF:FF:AA:00:4A:C8")) //iBeacon2
+        else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:C8")) //iBeacon2
             y=1.1;
-        else if(deviceAddress.equals("FF:FF:49:A2:8D:81")) //iBeacon3
+        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon3
             y=0.0;
-        else if(deviceAddress.equals("FF:FF:AA:AA:00:4A:AE")) //iBeacon4
+        else if(deviceAddress.trim().equals("FF:FF:25:1C:CD:80")) //iBeacon4
             y=2.8;
-        else if(deviceAddress.equals("FF:FF:3B:55:93:00")) //iBeacon5
+        else if(deviceAddress.trim().equals("FF:FF:9C:08:A1:80")) //iBeacon5
             y=0.0;
-        else if(deviceAddress.equals("FF:FF:25:1C:CD:80")) //iBeacon6
-            y=0.0;
+        else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:AE")) //iBeacon6
+            y=2.8;
 
         return  y;
+    }
+
+    public void removeAt(int position)
+    {
+        deviceList.remove(position);
+        notifyItemRemoved(position);
+        notifyItemRangeChanged(position, deviceList.size());
     }
 }

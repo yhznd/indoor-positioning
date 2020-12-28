@@ -34,6 +34,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.hybrid.ips.app.Device;
+import com.hybrid.ips.app.Location;
 import com.hybrid.ips.app.R;
 import com.hybrid.ips.app.adapter.DevicePositionAdapter;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
@@ -292,39 +293,60 @@ public class DevicePositionActivity extends AppCompatActivity
 
     public void determineLocation()
     {
-        createNewUUID();
-        realm = Realm.getDefaultInstance();
-        RealmResults<Device> devices=realm.where(Device.class).findAll();
-        int size=devices.size();
+
+        RealmResults<Device> devices = realm.where(Device.class).findAll();
+        final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
+        int size = devices.size();
+        String measureId = "";
         double[][] positions = new double[size][size];
         double[] distances = new double[size];
 
-        for(int i=0;i<size;i++)
-        {
+        for (int i = 0; i < size; i++) {
             positions[i][0] = devices.get(i).getX();
             positions[0][i] = devices.get(i).getY();
+            measureId = devices.get(i).getUUID();
         }
 
-        for(int i=0;i<size;i++)
-        {
+        for (int i = 0; i < size; i++) {
             distances[i] = devices.get(i).getDistance();
         }
         try
         {
             NonLinearLeastSquaresSolver solver = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances), new LevenbergMarquardtOptimizer());
             LeastSquaresOptimizer.Optimum optimum = solver.solve();
-            double[] centroid = optimum.getPoint().toArray();
-            Toast.makeText(this, "X:"+df2.format(centroid[0])+" Y:"+df2.format(centroid[1]),Toast.LENGTH_LONG).show();
-        }
-        catch (IllegalArgumentException ex)
-        {
+            final double[] centroid = optimum.getPoint().toArray();
+            final Location calculatedLocation = new Location(UUID.randomUUID().toString(), fId, centroid[0], centroid[1], currentDate);
+            realm = Realm.getDefaultInstance();
+            realm.executeTransaction(new Realm.Transaction()
+            {
+                @Override
+                public void execute(Realm bgRealm)
+                {
+                    try
+                    {
+                        Location location = bgRealm.createObject(Location.class, UUID.randomUUID().toString());
+                        location.setLocationX(calculatedLocation.getLocationX());
+                        location.setLocationY(calculatedLocation.getLocationY());
+                        location.setMeasureId(fId);
+                        location.setCreatedAt(currentDate);
+                        Toast.makeText(DevicePositionActivity.this, "X:" + df2.format(centroid[0]) + " Y:" + df2.format(centroid[1]), Toast.LENGTH_LONG).show();
+                    } catch (RealmPrimaryKeyConstraintException ex)
+                    {
+                        Toast.makeText(DevicePositionActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+
+                    }
+
+
+                }
+
+            });
+        } catch (IllegalArgumentException ex) {
             ex.printStackTrace();
-            Toast.makeText(this,ex.getMessage(),Toast.LENGTH_LONG).show();
+            Toast.makeText(this, ex.getMessage(), Toast.LENGTH_LONG).show();
 
         }
-
+        createNewUUID();
     }
-
 
     private void createNewUUID()
     {

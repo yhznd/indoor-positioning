@@ -63,7 +63,7 @@ public class DevicePositionActivity extends AppCompatActivity
     private boolean mScanning;
     private Handler mHandler;
     private static final long SCAN_PERIOD = 3000; //3 second
-    private DecimalFormat df2 = new DecimalFormat("#.###");
+    private DecimalFormat df = new DecimalFormat("#.###");
     private DevicePositionAdapter devicePositionAdapter;
     private RecyclerView recyclerView;
     private ConstraintLayout constraintLayout;
@@ -203,7 +203,8 @@ public class DevicePositionActivity extends AppCompatActivity
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = wifiManager.getConnectionInfo();
         int numberOfLevels = 5;
-        final double distance = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
+        //double signalLevel = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
+        final double distance=calculateDistance(info.getRssi(),info.getFrequency());
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
 
         final Device device=new Device(fId,info.getMacAddress(),distance,4.55,0.0,(double)info.getRssi(),currentDate);
@@ -329,7 +330,7 @@ public class DevicePositionActivity extends AppCompatActivity
                         location.setLocationY(calculatedLocation.getLocationY());
                         location.setMeasureId(fId);
                         location.setCreatedAt(currentDate);
-                        Toast.makeText(DevicePositionActivity.this, "X:" + df2.format(centroid[0]) + " Y:" + df2.format(centroid[1]), Toast.LENGTH_LONG).show();
+                        Toast.makeText(DevicePositionActivity.this, "X:" + df.format(centroid[0]) + " Y:" + df.format(centroid[1]), Toast.LENGTH_LONG).show();
                     } catch (RealmPrimaryKeyConstraintException ex)
                     {
                         Toast.makeText(DevicePositionActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
@@ -358,7 +359,16 @@ public class DevicePositionActivity extends AppCompatActivity
         Toast.makeText(this, "New ID created", Toast.LENGTH_SHORT).show();
     }
 
+    public double calculateDistance(double signalLevelInDb, double freqInMHz) {
+        double exp = (27.55 - (20 * Math.log10(freqInMHz)) + Math.abs(signalLevelInDb)) / 20.0;
+        return Math.pow(10.0, exp);
 
+        //Resource: https://en.wikipedia.org/wiki/Free-space_path_loss#Free-space_path_loss_in_decibels
+    }
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        realm.close();
+    }
 }

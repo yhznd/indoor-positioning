@@ -42,15 +42,14 @@ import com.lemmingapex.trilateration.TrilaterationFunction;
 
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
-
 import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
-
 import io.realm.Realm;
 import io.realm.RealmResults;
+import io.realm.Sort;
 import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 
 public class DevicePositionActivity extends AppCompatActivity
@@ -72,9 +71,10 @@ public class DevicePositionActivity extends AppCompatActivity
 
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) 
+    protected void onCreate(@Nullable Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        realm = Realm.getDefaultInstance();
         setContentView(R.layout.activity_device_position);
         constraintLayout = findViewById(R.id.mainLocationLayout);
         mHandler = new Handler();
@@ -148,7 +148,7 @@ public class DevicePositionActivity extends AppCompatActivity
         switch (requestCode)
         {
             case PERMISSION_REQUEST_COARSE_LOCATION:
-                {
+            {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 {
                     Log.d(TAG, "Location permission granted");
@@ -202,13 +202,10 @@ public class DevicePositionActivity extends AppCompatActivity
     {
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = wifiManager.getConnectionInfo();
-        int numberOfLevels = 5;
-        //double signalLevel = WifiManager.calculateSignalLevel(info.getRssi(), numberOfLevels);
         final double distance=calculateDistance(info.getRssi(),info.getFrequency());
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
 
-        final Device device=new Device(fId,info.getMacAddress(),distance,4.55,0.0,(double)info.getRssi(),currentDate);
-        realm = Realm.getDefaultInstance();
+        final Device device=new Device(fId,info.getMacAddress(),distance,2.05,0.0,(double)info.getRssi(),currentDate);
         realm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm bgRealm)
@@ -219,7 +216,7 @@ public class DevicePositionActivity extends AppCompatActivity
                     device1.setUUID(fId);
                     device1.setMacAddres(device.getMacAddres());
                     device1.setDistance(distance);
-                    device1.setX(4.55);
+                    device1.setX(2.05);
                     device1.setY(0.0);
                     device1.setRssi(device.getRssi());
                     device1.setCreatedAt(currentDate);
@@ -228,7 +225,7 @@ public class DevicePositionActivity extends AppCompatActivity
                                     ", Distance: "+device.getDistance()+" m",
                             Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
-                    Toast.makeText(DevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_LONG).show();
+                    Toast.makeText(DevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_SHORT).show();
                 }
                 catch (RealmPrimaryKeyConstraintException ex)
                 {
@@ -250,7 +247,8 @@ public class DevicePositionActivity extends AppCompatActivity
     }
 
 
-    private void scanLeDevice() {
+    private void scanLeDevice()
+    {
         if (!mScanning) {
             // Stops scanning after a pre-defined scan period
             mHandler.postDelayed(new Runnable() {
@@ -273,11 +271,11 @@ public class DevicePositionActivity extends AppCompatActivity
     private ScanCallback leScanCallback =
             new ScanCallback() {
                 @Override
-                public void onScanResult(int callbackType, ScanResult result) 
+                public void onScanResult(int callbackType, ScanResult result)
                 {
                     super.onScanResult(callbackType, result);
                     devicePositionAdapter.addDevice(result.getDevice());
-                    devicePositionAdapter.addRssi(result.getDevice(),result.getRssi());
+                    devicePositionAdapter.addRssi(result.getDevice(), (double) result.getRssi());
                     devicePositionAdapter.addTxPower(result.getDevice(),-69.0);
                     devicePositionAdapter.notifyDataSetChanged();
 
@@ -295,21 +293,27 @@ public class DevicePositionActivity extends AppCompatActivity
     public void determineLocation()
     {
 
-        RealmResults<Device> devices = realm.where(Device.class).findAll();
+        Device lastDevice = realm.where(Device.class).sort("createdAt", Sort.DESCENDING).findFirst();
+        String lastUUID=lastDevice.getUUID();
+        Log.d("Yunus","Son buldugum ID"+lastUUID);
+
+        RealmResults<Device> result = realm.where(Device.class).equalTo("UUID",lastUUID).findAll();
+        Log.d("Yunus","Son buldugum cihaz sayisi"+result.size());
+
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
-        int size = devices.size();
-        String measureId = "";
-        double[][] positions = new double[size][size];
+        int size = result.size();
+        double[][] positions = new double[size][2];
         double[] distances = new double[size];
 
-        for (int i = 0; i < size; i++) {
-            positions[i][0] = devices.get(i).getX();
-            positions[0][i] = devices.get(i).getY();
-            measureId = devices.get(i).getUUID();
+        for (int i = 0; i < size; i++)
+        {
+            positions[i][0] = result.get(i).getX();
+            positions[i][1] = result.get(i).getY();
         }
 
-        for (int i = 0; i < size; i++) {
-            distances[i] = devices.get(i).getDistance();
+        for (int i = 0; i < size; i++)
+        {
+            distances[i] = result.get(i).getDistance();
         }
         try
         {
@@ -317,7 +321,6 @@ public class DevicePositionActivity extends AppCompatActivity
             LeastSquaresOptimizer.Optimum optimum = solver.solve();
             final double[] centroid = optimum.getPoint().toArray();
             final Location calculatedLocation = new Location(UUID.randomUUID().toString(), fId, centroid[0], centroid[1], currentDate);
-            realm = Realm.getDefaultInstance();
             realm.executeTransaction(new Realm.Transaction()
             {
                 @Override
@@ -331,7 +334,8 @@ public class DevicePositionActivity extends AppCompatActivity
                         location.setMeasureId(fId);
                         location.setCreatedAt(currentDate);
                         Toast.makeText(DevicePositionActivity.this, "X:" + df.format(centroid[0]) + " Y:" + df.format(centroid[1]), Toast.LENGTH_LONG).show();
-                    } catch (RealmPrimaryKeyConstraintException ex)
+                    }
+                    catch (RealmPrimaryKeyConstraintException ex)
                     {
                         Toast.makeText(DevicePositionActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
 
@@ -367,7 +371,8 @@ public class DevicePositionActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onDestroy()
+    {
         super.onDestroy();
         realm.close();
     }

@@ -18,11 +18,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.hybrid.ips.app.Device;
-import com.hybrid.ips.app.activity.DevicePositionActivity;
 import com.hybrid.ips.app.filters.KalmanFilter;
 import com.hybrid.ips.app.R;
 
@@ -43,8 +39,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
     private HashMap<BluetoothDevice, Double> hashRssiMap;
     private HashMap<BluetoothDevice, Double> hashTxPowerMap;
     private HashMap<String, KalmanFilter> mKalmanFilters;
-    private DecimalFormat df2 = new DecimalFormat("#.###");
-    private FirebaseDatabase database;
+    private DecimalFormat df2 = new DecimalFormat("#.####");
     private Realm realm;
     private Context context;
     private static final double KALMAN_R = 0.125d;
@@ -57,7 +52,6 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
         deviceList = new ArrayList<BluetoothDevice>();
         hashRssiMap = new HashMap<BluetoothDevice, Double>();
         hashTxPowerMap = new HashMap<BluetoothDevice, Double>();
-        database=FirebaseDatabase.getInstance();
         mKalmanFilters=new HashMap<String,KalmanFilter>();
     }
 
@@ -78,36 +72,38 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
         }
     }
 
-    public void addRssi(BluetoothDevice device, Integer rssi)
+    public void addRssi(BluetoothDevice device, double rssi)
     {
         double smoothedRssi;
         if (deviceList.contains(device))
         {
 
-            if (mKalmanFilters.keySet().contains(device.getAddress())) {
+            if (mKalmanFilters.keySet().contains(device.getAddress()))
+            {
                 KalmanFilter mKalman = mKalmanFilters.get(device.getAddress());
 
                 // This will give you a smoothed RSSI value because 'x == lastRssi'
                 smoothedRssi = mKalman.applyFilter(rssi);
-
+                Log.i(TAG, "Old Rssi: " + rssi + "Smoothed RSSI: " + smoothedRssi);
                 // Do what you want with this rssi
-            } else {
+            }
+            else
+            {
                 KalmanFilter mKalman = new KalmanFilter(KALMAN_R, KALMAN_Q);
                 smoothedRssi = mKalman.applyFilter(rssi);
                 mKalmanFilters.put(device.getAddress(), mKalman);
+                Log.i(TAG, "Old Rssi: " + rssi + "Smoothed RSSI: " + smoothedRssi);
             }
 
-            Log.i(TAG, "Old Rssi: " + rssi + "Smoothed RSSI: " + smoothedRssi);
+
             hashRssiMap.put(device, smoothedRssi);
         }
-
     }
 
-    public void addTxPower(BluetoothDevice device, Double txPower) {
+    public void addTxPower(BluetoothDevice device, double txPower)
+    {
         if (deviceList.contains(device)) {
             hashTxPowerMap.put(device, txPower);
-
-
         }
     }
 
@@ -139,7 +135,8 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
 
                 final Device deviceBLE = new Device(fId, macAddress, distance, x, y, rssi, currentDate);
                 realm = Realm.getDefaultInstance();
-                realm.executeTransaction(new Realm.Transaction() {
+                realm.executeTransaction(new Realm.Transaction()
+                {
                     @Override
                     public void execute(Realm bgRealm) {
                         try {
@@ -151,7 +148,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
                             device1.setY(deviceBLE.getY());
                             device1.setRssi(deviceBLE.getRssi());
                             device1.setCreatedAt(deviceBLE.getCreatedAt());
-                            Toast.makeText(context, device.getAddress() + " saved!", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(context, device.getAddress() + " saved!", Toast.LENGTH_SHORT).show();
                         } catch (RealmPrimaryKeyConstraintException ex) {
                             Toast.makeText(context, "BLE information alreayd exists for this ID!", Toast.LENGTH_SHORT).show();
 
@@ -191,39 +188,24 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
 
     public double calculateDistance(double rssi,double txPower)
     {
-        if ( rssi == 0)
-        {
-            return -1.0; // if we cannot determine distance, return -1.
-        }
-
-        double ratio = rssi * 1.0 / txPower;
-
-        if (ratio < 1.0)
-        {
-            return Math.pow(ratio, 10);
-        }
-        else
-        {
-            return (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
-
-        }
+        return Math.pow(10d, ( txPower - rssi) / (10 * 2));
     }
     
     public double determineX(String deviceAddress)
     {
         double x = 0.0;
         if(deviceAddress.trim().equals("FF:FF:49:A2:8D:81")) //iBeacon1-origin
-            x=0.0;
+            x=2.05;
         else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:C8")) //iBeacon2
-            x=2.4;
-        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon3
-            x=2.5;
+            x=2.05;
+        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon3--origin
+            x=0.0;
         else if(deviceAddress.trim().equals("FF:FF:25:1C:CD:80")) //iBeacon4
-            x=2.5;
+            x=0.0;
         else if(deviceAddress.trim().equals("FF:FF:9C:08:A1:80")) //iBeacon5
-            x=6.6;
+            x=4.10;
         else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:AE")) //iBeacon6
-            x=6.6;
+            x=4.10;
 
         return  x;
     }
@@ -231,11 +213,11 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
     public double determineY(String deviceAddress)
     {
         double y = 0.0;
-        if(deviceAddress.trim().equals("FF:FF:49:A2:8D:81")) //iBeacon1-origin
+        if(deviceAddress.trim().equals("FF:FF:49:A2:8D:81")) //iBeacon1
             y=0.0;
         else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:C8")) //iBeacon2
-            y=1.1;
-        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon3
+            y=2.8;
+        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon3--origin
             y=0.0;
         else if(deviceAddress.trim().equals("FF:FF:25:1C:CD:80")) //iBeacon4
             y=2.8;

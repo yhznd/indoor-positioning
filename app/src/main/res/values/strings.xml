@@ -10,9 +10,10 @@
     <string name="dialog_title">New measurement?</string>
     <string name="search_devices">"Scanning…"</string>
     <string name="ble_device_name">%1$s</string>
-    <string name="ble_coordinates">X:%1$.1f Y:%2$.1f</string>
-    <string name="ble_rssi">RSSI: %1$.2f</string>
-    <string name="ble_distance">D:%1$s m</string>
+    <string name="ble_coordinates">X:%1$.2f Y:%2$.2f</string>
+    <string name="ble_rssi">%1$.2f</string>
+    <string name="ble_battery">%d</string>
+    <string name="ble_distance">%1$s m</string>
     <string name="see_location_phase">See Location</string>
     <string name="set_device_phase">Device Position</string>
     <string name="main">Indoor Positioning with BLE and WiFi Hybrid Technologies</string>
@@ -29,9 +30,7 @@
     <string name="whichScenario">Please select a scenario</string>
     <string name="scenario">Scenario %1$s</string>
     <string name="title_activity_maps">Map</string>
-    <string-array name="scenarios">
-        <item>Scenario 1: 6 BLE Device</item>
-    </string-array>
+
 
     <string-array name="areas4">
         <item>A1</item>

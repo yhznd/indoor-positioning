@@ -5,7 +5,13 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
@@ -18,19 +24,18 @@ import android.icu.text.SimpleDateFormat;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.hybrid.ips.app.Device;
@@ -39,11 +44,9 @@ import com.hybrid.ips.app.R;
 import com.hybrid.ips.app.adapter.DevicePositionAdapter;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
-
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
@@ -57,17 +60,21 @@ public class DevicePositionActivity extends AppCompatActivity
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BLUETOOTH = 1;
     private static final String TAG = "BLE_Connection";
+    private final static UUID BATTERY_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
+    private final static UUID BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
     private FloatingActionButton scanBLEButton, scanWifiButton, saveLocation;
     private BluetoothLeScanner bluetoothLeScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
-    private boolean mScanning;
-    private Handler mHandler;
-    private static final long SCAN_PERIOD = 3000; //3 second
+    private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothDevice mDevice;
+    private Handler mHandler = new Handler();
+    private static final long SCAN_PERIOD = 10000; //10 second
     private DecimalFormat df = new DecimalFormat("#.###");
     private DevicePositionAdapter devicePositionAdapter;
     private RecyclerView recyclerView;
     private ConstraintLayout constraintLayout;
     private String fId;
     private Realm realm;
+    private boolean mScanning;
 
 
     @Override
@@ -77,18 +84,27 @@ public class DevicePositionActivity extends AppCompatActivity
         realm = Realm.getDefaultInstance();
         setContentView(R.layout.activity_device_position);
         constraintLayout = findViewById(R.id.mainLocationLayout);
-        mHandler = new Handler();
         scanBLEButton = findViewById(R.id.scanBLEButton);
         scanWifiButton = findViewById(R.id.scanWifiButton);
         saveLocation= findViewById(R.id.saveLocation);
         recyclerView = findViewById(R.id.recycleViewLocation);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-
-        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
-
         setAll();
+
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = bluetoothManager.getAdapter();
+
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled())
+        {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, PERMISSION_REQUEST_BLUETOOTH);
+        }
+        else
+        {
+            scanBLEDevice();
+        }
 
         scanBLEButton.setOnClickListener(new View.OnClickListener()
         {
@@ -96,7 +112,16 @@ public class DevicePositionActivity extends AppCompatActivity
             public void onClick(View view) {
                 Snackbar.make(view, R.string.search_devices, Snackbar.LENGTH_SHORT)
                         .setAction("Action", null).show();
-                scanLeDevice();
+                if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled())
+                {
+                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(enableBtIntent, PERMISSION_REQUEST_BLUETOOTH);
+                }
+                else
+                {
+                    scanBLEDevice();
+                }
+
 
 
             }
@@ -130,17 +155,25 @@ public class DevicePositionActivity extends AppCompatActivity
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
         }
 
-        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled())
-        {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, PERMISSION_REQUEST_BLUETOOTH);
-        }
         if (!isLocationPermissionGranted())
         {
             askLocationPermission();
         }
 
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode)
+        {
+            case PERMISSION_REQUEST_BLUETOOTH:
+                Log.d(TAG, "Result");
+                scanBLEDevice();
+        }
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -197,7 +230,7 @@ public class DevicePositionActivity extends AppCompatActivity
         return this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
-    @SuppressLint("HardwareIds")
+
     private void getWifiInfo()
     {
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -205,7 +238,7 @@ public class DevicePositionActivity extends AppCompatActivity
         final double distance=calculateDistance(info.getRssi(),info.getFrequency());
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
 
-        final Device device=new Device(fId,info.getMacAddress(),distance,2.05,0.0,(double)info.getRssi(),currentDate);
+        final Device device=new Device(fId,info.getMacAddress(),distance,2.05,0.0,(double)info.getRssi(),100,currentDate);
         realm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm bgRealm)
@@ -219,6 +252,7 @@ public class DevicePositionActivity extends AppCompatActivity
                     device1.setX(2.05);
                     device1.setY(0.0);
                     device1.setRssi(device.getRssi());
+                    device1.setBatteryLevel(100);
                     device1.setCreatedAt(currentDate);
                     Snackbar.make(constraintLayout, "SSID : " + device.getMacAddres() +
                                     ", RSSI: " + device.getRssi()+
@@ -247,11 +281,13 @@ public class DevicePositionActivity extends AppCompatActivity
     }
 
 
-    private void scanLeDevice()
+
+    private void scanBLEDevice()
     {
         if (!mScanning) {
             // Stops scanning after a pre-defined scan period
-            mHandler.postDelayed(new Runnable() {
+            mHandler.postDelayed(new Runnable()
+            {
                 @Override
                 public void run() {
                     mScanning = false;
@@ -268,12 +304,15 @@ public class DevicePositionActivity extends AppCompatActivity
         }
     }
     // Device scan callback.
+
     private ScanCallback leScanCallback =
             new ScanCallback() {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result)
                 {
                     super.onScanResult(callbackType, result);
+                    mDevice=result.getDevice();
+                    new BluetoothTask(DevicePositionActivity.this).execute();
                     devicePositionAdapter.addDevice(result.getDevice());
                     devicePositionAdapter.addRssi(result.getDevice(), (double) result.getRssi());
                     devicePositionAdapter.addTxPower(result.getDevice(),-69.0);
@@ -295,10 +334,8 @@ public class DevicePositionActivity extends AppCompatActivity
 
         Device lastDevice = realm.where(Device.class).sort("createdAt", Sort.DESCENDING).findFirst();
         String lastUUID=lastDevice.getUUID();
-        Log.d("Yunus","Son buldugum ID"+lastUUID);
 
         RealmResults<Device> result = realm.where(Device.class).equalTo("UUID",lastUUID).findAll();
-        Log.d("Yunus","Son buldugum cihaz sayisi"+result.size());
 
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
         int size = result.size();
@@ -375,5 +412,90 @@ public class DevicePositionActivity extends AppCompatActivity
     {
         super.onDestroy();
         realm.close();
+    }
+
+    private class BluetoothTask extends AsyncTask<Void, Void, Void> {
+        private final Context mContext;
+
+        private BluetoothGatt mBluetoothGatt;
+        private BluetoothGattCallback mGattCallback = new BluetoothGattCallback()
+        {
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState)
+            {
+                super.onConnectionStateChange(gatt, status, newState);
+                if (newState == BluetoothProfile.STATE_CONNECTED)
+                {
+                    Log.i(TAG, "Connected to GATT server.");
+                    Log.i(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
+
+                }
+                else if (newState == BluetoothProfile.STATE_DISCONNECTED)
+                {
+                    Log.i(TAG, "Disconnected from GATT server.");
+                }
+            }
+
+            @Override
+            public void onServicesDiscovered(BluetoothGatt gatt, int status)
+            {
+                super.onServicesDiscovered(gatt, status);
+
+                Log.d(TAG, "Services discovered status: " + status);
+
+                for (BluetoothGattService service : gatt.getServices())
+                {
+                    if (service.getUuid().equals(BATTERY_UUID))
+                    {
+                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(BATTERY_LEVEL);
+
+                        if (characteristic != null)
+                        {
+                            mBluetoothGatt.readCharacteristic(characteristic);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCharacteristicRead(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status)
+            {
+                super.onCharacteristicRead(gatt, characteristic, status);
+
+                final Integer batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+
+                if (batteryLevel != null)
+                {
+                    Log.d(TAG, "battery level: " + batteryLevel);
+
+                    mHandler.post(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            devicePositionAdapter.addBatteryLevel(gatt.getDevice(),batteryLevel);
+                        }
+                    });
+                }
+
+            }
+        };
+
+        public BluetoothTask(Context context) {
+            this.mContext = context;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            mBluetoothGatt = mDevice.connectGatt(mContext, false, mGattCallback);
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid)
+        {
+
+        }
     }
 }

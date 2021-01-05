@@ -15,6 +15,7 @@ public class Device extends RealmObject
     Double y;
     Double rssi;
     String createdAt;
+    Integer batteryLevel;
 
     public String getId() {
         return id;
@@ -83,13 +84,22 @@ public class Device extends RealmObject
     public Device() {
     }
 
-    public Device(String UUID, String macAddres, Double distance, Double x, Double y, Double rssi, String createdAt) {
+    public Integer getBatteryLevel() {
+        return batteryLevel;
+    }
+
+    public void setBatteryLevel(Integer batteryLevel) {
+        this.batteryLevel = batteryLevel;
+    }
+
+    public Device(String UUID, String macAddres, Double distance, Double x, Double y, Double rssi, Integer batteryLevel,String createdAt) {
         this.UUID = UUID;
         this.macAddres = macAddres;
         this.distance = distance;
         this.x = x;
         this.y = y;
         this.rssi = rssi;
+        this.batteryLevel=batteryLevel;
         this.createdAt = createdAt;
     }
 }

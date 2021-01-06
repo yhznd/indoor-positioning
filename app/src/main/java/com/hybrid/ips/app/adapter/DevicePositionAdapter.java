@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 import com.hybrid.ips.app.Device;
 import com.hybrid.ips.app.filters.KalmanFilter;
@@ -62,10 +63,10 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
 
     public void addDevice(BluetoothDevice device)
     {
-        if (!deviceList.contains(device) && device.getName()!=null && device.getName().trim().equals("iTAG"))
+        if (!deviceList.contains(device) && device.getName()!=null && device.getName().trim().equals("POI")
+         || !deviceList.contains(device) && device.getName()!=null && device.getName().trim().equals("iTAG"))
         {
             deviceList.add(device);
-
 
         }
     }
@@ -93,8 +94,12 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
                 Log.i(TAG, "Old Rssi: " + rssi + "Smoothed RSSI: " + smoothedRssi);
             }
 
-
-            hashRssiMap.put(device, smoothedRssi);
+            if (smoothedRssi>=-80.0)
+                hashRssiMap.put(device, smoothedRssi);
+            else
+            {
+                removeAt(deviceList.indexOf(device));
+            }
         }
     }
 
@@ -125,7 +130,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
                                                             determineY(device.getAddress())));
         holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(hashRssiMap.get(device), hashTxPowerMap.get(device)))));
 
-        holder.saveButton.setOnClickListener(new View.OnClickListener()
+        holder.cardView.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View view)
@@ -140,6 +145,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
                 double x = determineX(device.getAddress());
                 double y = determineY(device.getAddress());
                 double rssi = hashRssiMap.get(device);
+
 
                 final Device deviceBLE = new Device(fId, macAddress, distance, x, y, rssi, battery,currentDate);
                 realm = Realm.getDefaultInstance();
@@ -185,7 +191,9 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
         TextView deviceCoordinates;
         TextView deviceBattery;
         Button saveButton;
-        public ViewHolder(@NonNull View view) {
+        CardView cardView;
+        public ViewHolder(@NonNull View view)
+        {
             super(view);
             deviceRssi = view.findViewById(R.id.device_rssi);
             deviceMac = view.findViewById(R.id.device_name);
@@ -193,30 +201,31 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
             deviceCoordinates=view.findViewById(R.id.device_coordinates);
             deviceBattery = view.findViewById(R.id.deviceBattery);
             saveButton=view.findViewById(R.id.saveLocation);
+            cardView=view.findViewById(R.id.cardView);
         }
     }
 
 
-    public double calculateDistance(double rssi,double txPower)
+    protected static double calculateDistance(double rssi, double txPower)
     {
         return Math.pow(10d, ( txPower - rssi) / (10 * 2));
     }
-    
+
     public double determineX(String deviceAddress)
     {
         double x = 0.0;
-        if(deviceAddress.trim().equals("FF:FF:49:A2:8D:81")) //iBeacon1-origin
-            x=2.05;
-        else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:C8")) //iBeacon2
-            x=2.05;
-        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon3--origin
+        if(deviceAddress.trim().contains("ED:7B:9D")) //iBeacon1-origin
             x=0.0;
-        else if(deviceAddress.trim().equals("FF:FF:25:1C:CD:80")) //iBeacon4
-            x=0.0;
-        else if(deviceAddress.trim().equals("FF:FF:9C:08:A1:80")) //iBeacon5
-            x=4.10;
-        else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:AE")) //iBeacon6
-            x=4.10;
+        else if(deviceAddress.trim().contains("FF:FF:25")) //iBeacon2
+            x=2.4;
+        else if(deviceAddress.trim().contains("FF:A2:5C")) //iBeacon3
+            x=2.5;
+        else if(deviceAddress.trim().contains("FF:0F:D9")) //iBeacon4
+            x=2.5;
+        else if(deviceAddress.trim().contains("E1:F4:AD")) //iBeacon5
+            x=6.6;
+        else if(deviceAddress.trim().contains("D3:3F:DD")) //iBeacon6
+            x=6.6;
 
         return  x;
     }
@@ -224,17 +233,17 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
     public double determineY(String deviceAddress)
     {
         double y = 0.0;
-        if(deviceAddress.trim().equals("FF:FF:49:A2:8D:81")) //iBeacon1
+        if(deviceAddress.trim().contains("ED:7B:9D")) //iBeacon1-origin
             y=0.0;
-        else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:C8")) //iBeacon2
+        else if(deviceAddress.trim().contains("FF:FF:25")) //iBeacon2
+            y=1.1;
+        else if(deviceAddress.trim().contains("FF:A2:5C")) //iBeacon3
+            y=0.0;
+        else if(deviceAddress.trim().contains("FF:0F:D9")) //iBeacon4
             y=2.8;
-        else if(deviceAddress.trim().equals("FF:FF:3B:55:93:00")) //iBeacon3--origin
+        else if(deviceAddress.trim().contains("E1:F4:AD")) //iBeacon5
             y=0.0;
-        else if(deviceAddress.trim().equals("FF:FF:25:1C:CD:80")) //iBeacon4
-            y=2.8;
-        else if(deviceAddress.trim().equals("FF:FF:9C:08:A1:80")) //iBeacon5
-            y=0.0;
-        else if(deviceAddress.trim().equals("FF:FF:AA:00:4A:AE")) //iBeacon6
+        else if(deviceAddress.trim().contains("D3:3F:DD")) //iBeacon6
             y=2.8;
 
         return  y;

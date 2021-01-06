@@ -60,8 +60,8 @@ public class DevicePositionActivity extends AppCompatActivity
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BLUETOOTH = 1;
     private static final String TAG = "BLE_Connection";
-    private final static UUID BATTERY_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
-    private final static UUID BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
+    private final static UUID BATTERY_UUID = UUID.fromString("8aa11000-0a46-115f-d94e-5a966a3ddbb7");
+    private final static UUID BATTERY_LEVEL= UUID.fromString("8aa11004-0a46-115f-d94e-5a966a3ddbb7");
     private FloatingActionButton scanBLEButton, scanWifiButton, saveLocation;
     private BluetoothLeScanner bluetoothLeScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
     private BluetoothAdapter mBluetoothAdapter;
@@ -119,6 +119,7 @@ public class DevicePositionActivity extends AppCompatActivity
                 }
                 else
                 {
+
                     scanBLEDevice();
                 }
 
@@ -131,8 +132,6 @@ public class DevicePositionActivity extends AppCompatActivity
         {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, R.string.search_devices, Snackbar.LENGTH_SHORT)
-                        .setAction("Action", null).show();
                 if(isWifiConnected())
                     getWifiInfo();
 
@@ -238,7 +237,7 @@ public class DevicePositionActivity extends AppCompatActivity
         final double distance=calculateDistance(info.getRssi(),info.getFrequency());
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
 
-        final Device device=new Device(fId,info.getMacAddress(),distance,2.05,0.0,(double)info.getRssi(),100,currentDate);
+        final Device device=new Device(fId,info.getMacAddress(),distance,4.55,0.0,(double)info.getRssi(),100,currentDate);
         realm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm bgRealm)
@@ -249,16 +248,11 @@ public class DevicePositionActivity extends AppCompatActivity
                     device1.setUUID(fId);
                     device1.setMacAddres(device.getMacAddres());
                     device1.setDistance(distance);
-                    device1.setX(2.05);
+                    device1.setX(4.55);
                     device1.setY(0.0);
                     device1.setRssi(device.getRssi());
                     device1.setBatteryLevel(100);
                     device1.setCreatedAt(currentDate);
-                    Snackbar.make(constraintLayout, "SSID : " + device.getMacAddres() +
-                                    ", RSSI: " + device.getRssi()+
-                                    ", Distance: "+device.getDistance()+" m",
-                            Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
                     Toast.makeText(DevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_SHORT).show();
                 }
                 catch (RealmPrimaryKeyConstraintException ex)
@@ -312,8 +306,9 @@ public class DevicePositionActivity extends AppCompatActivity
                 {
                     super.onScanResult(callbackType, result);
                     mDevice=result.getDevice();
-                    new BluetoothTask(DevicePositionActivity.this).execute();
                     devicePositionAdapter.addDevice(result.getDevice());
+                    devicePositionAdapter.addBatteryLevel(result.getDevice(),99);
+                    //new BluetoothTask(DevicePositionActivity.this).execute();
                     devicePositionAdapter.addRssi(result.getDevice(), (double) result.getRssi());
                     devicePositionAdapter.addTxPower(result.getDevice(),-69.0);
                     devicePositionAdapter.notifyDataSetChanged();
@@ -400,6 +395,7 @@ public class DevicePositionActivity extends AppCompatActivity
         Toast.makeText(this, "New ID created", Toast.LENGTH_SHORT).show();
     }
 
+
     public double calculateDistance(double signalLevelInDb, double freqInMHz) {
         double exp = (27.55 - (20 * Math.log10(freqInMHz)) + Math.abs(signalLevelInDb)) / 20.0;
         return Math.pow(10.0, exp);
@@ -466,7 +462,7 @@ public class DevicePositionActivity extends AppCompatActivity
 
                 if (batteryLevel != null)
                 {
-                    Log.d(TAG, "battery level: " + batteryLevel);
+                    Log.i(TAG, "battery level: " + batteryLevel);
 
                     mHandler.post(new Runnable()
                     {

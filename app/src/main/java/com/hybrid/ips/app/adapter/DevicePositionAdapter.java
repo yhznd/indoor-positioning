@@ -110,7 +110,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
         }
     }
 
-    public void addBatteryLevel(BluetoothDevice device, int batteryLevel)
+    public void addBatteryLevel(BluetoothDevice device, Integer batteryLevel)
     {
         if (deviceList.contains(device))
         {

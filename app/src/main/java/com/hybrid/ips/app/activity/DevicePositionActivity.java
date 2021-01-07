@@ -60,8 +60,8 @@ public class DevicePositionActivity extends AppCompatActivity
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BLUETOOTH = 1;
     private static final String TAG = "BLE_Connection";
-    private final static UUID BATTERY_UUID = UUID.fromString("8aa11000-0a46-115f-d94e-5a966a3ddbb7");
-    private final static UUID BATTERY_LEVEL= UUID.fromString("8aa11004-0a46-115f-d94e-5a966a3ddbb7");
+    private final static UUID BATTERY_UUID = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb");
+    private final static UUID BATTERY_LEVEL= UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb");
     private FloatingActionButton scanBLEButton, scanWifiButton, saveLocation;
     private BluetoothLeScanner bluetoothLeScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
     private BluetoothAdapter mBluetoothAdapter;
@@ -308,7 +308,7 @@ public class DevicePositionActivity extends AppCompatActivity
                     mDevice=result.getDevice();
                     devicePositionAdapter.addDevice(result.getDevice());
                     devicePositionAdapter.addBatteryLevel(result.getDevice(),99);
-                    //new BluetoothTask(DevicePositionActivity.this).execute();
+                    new BluetoothTask(DevicePositionActivity.this).execute();
                     devicePositionAdapter.addRssi(result.getDevice(), (double) result.getRssi());
                     devicePositionAdapter.addTxPower(result.getDevice(),-69.0);
                     devicePositionAdapter.notifyDataSetChanged();
@@ -463,7 +463,6 @@ public class DevicePositionActivity extends AppCompatActivity
                 if (batteryLevel != null)
                 {
                     Log.i(TAG, "battery level: " + batteryLevel);
-
                     mHandler.post(new Runnable()
                     {
                         @Override
@@ -473,6 +472,7 @@ public class DevicePositionActivity extends AppCompatActivity
                         }
                     });
                 }
+
 
             }
         };

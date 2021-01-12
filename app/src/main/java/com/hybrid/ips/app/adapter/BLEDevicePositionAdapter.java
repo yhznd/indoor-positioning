@@ -94,6 +94,7 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
                 Log.i(TAG, "Old Rssi: " + rssi + "Smoothed RSSI: " + smoothedRssi);
             }
 
+
             if (smoothedRssi>=-80.0)
                 hashRssiMap.put(device, smoothedRssi);
             else
@@ -137,7 +138,7 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
             {
 
                 SharedPreferences pref = context.getSharedPreferences("KEY", 0);
-                final String fId = pref.getString("UUID", "not defined"); // getting UUID
+                final String fId = pref.getString("measureId", "not defined"); // getting UUID
                 String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
                 String macAddress = device.getAddress();
                 double distance = calculateDistance(hashRssiMap.get(device), hashTxPowerMap.get(device));

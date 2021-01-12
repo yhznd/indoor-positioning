@@ -317,7 +317,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
 
     private void setAll()
     {
-        createNewUUID();
+        createNewMeasureID();
         BLEDevicePositionAdapter = new BLEDevicePositionAdapter(getApplicationContext());
         recyclerView.setAdapter(BLEDevicePositionAdapter);
 
@@ -329,7 +329,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
         Device lastDevice = realm.where(Device.class).sort("createdAt", Sort.DESCENDING).findFirst();
         String lastUUID=lastDevice.getMeasureId();
 
-        RealmResults<Device> result = realm.where(Device.class).equalTo("UUID",lastUUID).findAll();
+        RealmResults<Device> result = realm.where(Device.class).equalTo("measureId",lastUUID).findAll();
 
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
         int size = result.size();
@@ -381,15 +381,15 @@ public class BLEDevicePositionActivity extends AppCompatActivity
             Toast.makeText(this, ex.getMessage(), Toast.LENGTH_LONG).show();
 
         }
-        createNewUUID();
+        createNewMeasureID();
     }
 
-    private void createNewUUID()
+    private void createNewMeasureID()
     {
         fId = UUID.randomUUID().toString();
         SharedPreferences pref = getSharedPreferences("KEY", 0); // 0 - for private mode
         SharedPreferences.Editor editor = pref.edit();
-        editor.putString("UUID", fId); // Storing string
+        editor.putString("measureId", fId); // Storing string
         editor.apply();
         Toast.makeText(this, "New ID created", Toast.LENGTH_SHORT).show();
     }

@@ -1,4 +1,4 @@
-package com.hybrid.ips.app;
+package com.hybrid.ips.app.util;
 
 
 import io.realm.RealmObject;

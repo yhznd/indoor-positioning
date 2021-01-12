@@ -14,9 +14,9 @@
     <string name="ble_rssi">%1$.2f</string>
     <string name="ble_battery">%d</string>
     <string name="ble_distance">%1$s m</string>
-    <string name="see_location_phase">See Location</string>
-    <string name="set_device_phase">Device Position</string>
-    <string name="main">Indoor Positioning with BLE and WiFi Hybrid Technologies</string>
+    <string name="real_device_phase">Real Device Position</string>
+    <string name="set_device_phase">WiFi and BLE Position</string>
+    <string name="main">Indoor Positioning with WiFi and BLE \n Hybrid Technologies</string>
     <string name="noInternet">There is no internet connection. Please connect and restart the app.</string>
     <string name="noWifi">Please connect to WiFi.</string>
     <string name="whichPosition">Which area are you standing?</string>

@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view)
             {
-                Intent devicePositionActivity=new Intent(MainActivity.this, DevicePositionActivity.class);
+                Intent devicePositionActivity=new Intent(MainActivity.this, BLEDevicePositionActivity.class);
                 startActivity(devicePositionActivity);
             }
         });

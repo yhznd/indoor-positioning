@@ -2,7 +2,6 @@ package com.hybrid.ips.app.activity;
 
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -38,10 +37,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.hybrid.ips.app.Device;
-import com.hybrid.ips.app.Location;
+import com.hybrid.ips.app.util.Device;
+import com.hybrid.ips.app.util.Location;
 import com.hybrid.ips.app.R;
-import com.hybrid.ips.app.adapter.DevicePositionAdapter;
+import com.hybrid.ips.app.adapter.BLEDevicePositionAdapter;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
@@ -55,7 +54,7 @@ import io.realm.RealmResults;
 import io.realm.Sort;
 import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 
-public class DevicePositionActivity extends AppCompatActivity
+public class BLEDevicePositionActivity extends AppCompatActivity
 {
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BLUETOOTH = 1;
@@ -69,7 +68,7 @@ public class DevicePositionActivity extends AppCompatActivity
     private Handler mHandler = new Handler();
     private static final long SCAN_PERIOD = 10000; //10 second
     private DecimalFormat df = new DecimalFormat("#.###");
-    private DevicePositionAdapter devicePositionAdapter;
+    private BLEDevicePositionAdapter BLEDevicePositionAdapter;
     private RecyclerView recyclerView;
     private ConstraintLayout constraintLayout;
     private String fId;
@@ -253,11 +252,11 @@ public class DevicePositionActivity extends AppCompatActivity
                     device1.setRssi(device.getRssi());
                     device1.setBatteryLevel(100);
                     device1.setCreatedAt(currentDate);
-                    Toast.makeText(DevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BLEDevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_SHORT).show();
                 }
                 catch (RealmPrimaryKeyConstraintException ex)
                 {
-                    Toast.makeText(DevicePositionActivity.this,"Wifi information alreayd exists for this ID!",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(BLEDevicePositionActivity.this,"Wifi information alreayd exists for this ID!",Toast.LENGTH_SHORT).show();
 
                 }
 
@@ -306,12 +305,12 @@ public class DevicePositionActivity extends AppCompatActivity
                 {
                     super.onScanResult(callbackType, result);
                     mDevice=result.getDevice();
-                    devicePositionAdapter.addDevice(result.getDevice());
-                    devicePositionAdapter.addBatteryLevel(result.getDevice(),99);
-                    new BluetoothTask(DevicePositionActivity.this).execute();
-                    devicePositionAdapter.addRssi(result.getDevice(), (double) result.getRssi());
-                    devicePositionAdapter.addTxPower(result.getDevice(),-69.0);
-                    devicePositionAdapter.notifyDataSetChanged();
+                    BLEDevicePositionAdapter.addDevice(result.getDevice());
+                    BLEDevicePositionAdapter.addBatteryLevel(result.getDevice(),99);
+                    new BluetoothTask(BLEDevicePositionActivity.this).execute();
+                    BLEDevicePositionAdapter.addRssi(result.getDevice(), (double) result.getRssi());
+                    BLEDevicePositionAdapter.addTxPower(result.getDevice(),-69.0);
+                    BLEDevicePositionAdapter.notifyDataSetChanged();
 
                 }
             };
@@ -319,8 +318,8 @@ public class DevicePositionActivity extends AppCompatActivity
     private void setAll()
     {
         createNewUUID();
-        devicePositionAdapter = new DevicePositionAdapter(getApplicationContext());
-        recyclerView.setAdapter(devicePositionAdapter);
+        BLEDevicePositionAdapter = new BLEDevicePositionAdapter(getApplicationContext());
+        recyclerView.setAdapter(BLEDevicePositionAdapter);
 
     }
 
@@ -365,11 +364,11 @@ public class DevicePositionActivity extends AppCompatActivity
                         location.setLocationY(calculatedLocation.getLocationY());
                         location.setMeasureId(fId);
                         location.setCreatedAt(currentDate);
-                        Toast.makeText(DevicePositionActivity.this, "X:" + df.format(centroid[0]) + " Y:" + df.format(centroid[1]), Toast.LENGTH_LONG).show();
+                        Toast.makeText(BLEDevicePositionActivity.this, "X:" + df.format(centroid[0]) + " Y:" + df.format(centroid[1]), Toast.LENGTH_LONG).show();
                     }
                     catch (RealmPrimaryKeyConstraintException ex)
                     {
-                        Toast.makeText(DevicePositionActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(BLEDevicePositionActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
 
                     }
 
@@ -468,7 +467,7 @@ public class DevicePositionActivity extends AppCompatActivity
                         @Override
                         public void run()
                         {
-                            devicePositionAdapter.addBatteryLevel(gatt.getDevice(),batteryLevel);
+                            BLEDevicePositionAdapter.addBatteryLevel(gatt.getDevice(),batteryLevel);
                         }
                     });
                 }

@@ -15,7 +15,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
-import com.hybrid.ips.app.Device;
+import com.hybrid.ips.app.util.Device;
 import com.hybrid.ips.app.filters.KalmanFilter;
 import com.hybrid.ips.app.R;
 
@@ -30,7 +30,7 @@ import io.realm.Realm;
 import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 
 
-public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAdapter.ViewHolder> {
+public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePositionAdapter.ViewHolder> {
     private ArrayList<BluetoothDevice> deviceList;
     private static final String TAG = "BLE_Connection";
     private HashMap<BluetoothDevice, Double> hashRssiMap;
@@ -44,7 +44,7 @@ public class DevicePositionAdapter extends RecyclerView.Adapter<DevicePositionAd
     private static final double KALMAN_Q = 0.5d;
 
 
-    public DevicePositionAdapter(Context context)
+    public BLEDevicePositionAdapter(Context context)
     {
         this.context=context;
         deviceList = new ArrayList<BluetoothDevice>();

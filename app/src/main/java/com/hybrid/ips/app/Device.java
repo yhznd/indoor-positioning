@@ -8,7 +8,7 @@ public class Device extends RealmObject
 {
     @PrimaryKey
     String id;
-    String UUID;
+    String measureId;
     String macAddres;
     Double distance;
     Double x;
@@ -25,12 +25,12 @@ public class Device extends RealmObject
         this.id = id;
     }
 
-    public String getUUID() {
-        return UUID;
+    public String getMeasureId() {
+        return measureId;
     }
 
-    public void setUUID(String UUID) {
-        this.UUID = UUID;
+    public void setMeasureId(String measureId) {
+        this.measureId = measureId;
     }
 
     public String getMacAddres() {
@@ -92,8 +92,8 @@ public class Device extends RealmObject
         this.batteryLevel = batteryLevel;
     }
 
-    public Device(String UUID, String macAddres, Double distance, Double x, Double y, Double rssi, Integer batteryLevel,String createdAt) {
-        this.UUID = UUID;
+    public Device(String measureId, String macAddres, Double distance, Double x, Double y, Double rssi, Integer batteryLevel,String createdAt) {
+        this.measureId = measureId;
         this.macAddres = macAddres;
         this.distance = distance;
         this.x = x;

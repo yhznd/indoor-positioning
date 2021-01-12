@@ -245,7 +245,7 @@ public class DevicePositionActivity extends AppCompatActivity
                 try
                 {
                     Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
-                    device1.setUUID(fId);
+                    device1.setMeasureId(fId);
                     device1.setMacAddres(device.getMacAddres());
                     device1.setDistance(distance);
                     device1.setX(4.55);
@@ -328,7 +328,7 @@ public class DevicePositionActivity extends AppCompatActivity
     {
 
         Device lastDevice = realm.where(Device.class).sort("createdAt", Sort.DESCENDING).findFirst();
-        String lastUUID=lastDevice.getUUID();
+        String lastUUID=lastDevice.getMeasureId();
 
         RealmResults<Device> result = realm.where(Device.class).equalTo("UUID",lastUUID).findAll();
 

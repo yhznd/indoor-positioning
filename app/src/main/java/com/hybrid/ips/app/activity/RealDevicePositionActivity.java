@@ -5,25 +5,18 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
-import android.bluetooth.le.BluetoothLeScanner;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanResult;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.icu.text.SimpleDateFormat;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -37,10 +30,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.hybrid.ips.app.R;
+import com.hybrid.ips.app.adapter.RealDevicePositionAdapter;
 import com.hybrid.ips.app.util.Device;
 import com.hybrid.ips.app.util.Location;
-import com.hybrid.ips.app.R;
-import com.hybrid.ips.app.adapter.BLEDevicePositionAdapter;
+import com.hybrid.ips.app.util.RealDevice;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
@@ -54,7 +48,7 @@ import io.realm.RealmResults;
 import io.realm.Sort;
 import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 
-public class BLEDevicePositionActivity extends AppCompatActivity
+public class RealDevicePositionActivity extends AppCompatActivity
 {
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_BLUETOOTH = 1;
@@ -62,18 +56,13 @@ public class BLEDevicePositionActivity extends AppCompatActivity
     private final static UUID BATTERY_UUID = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb");
     private final static UUID BATTERY_LEVEL= UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb");
     private FloatingActionButton scanBLEButton, scanWifiButton, saveLocation;
-    private BluetoothLeScanner bluetoothLeScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
     private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothDevice mDevice;
-    private Handler mHandler = new Handler();
-    private static final long SCAN_PERIOD = 10000; //10 second
     private DecimalFormat df = new DecimalFormat("#.###");
-    private BLEDevicePositionAdapter bleDevicePositionAdapter;
+    private RealDevicePositionAdapter realDevicePositionAdapter;
     private RecyclerView recyclerView;
     private ConstraintLayout constraintLayout;
     private String fId;
     private Realm realm;
-    private boolean mScanning;
 
 
     @Override
@@ -81,12 +70,12 @@ public class BLEDevicePositionActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         realm = Realm.getDefaultInstance();
-        setContentView(R.layout.activity_device_position);
+        setContentView(R.layout.activity_real_device_position);
         constraintLayout = findViewById(R.id.mainLocationLayout);
         scanBLEButton = findViewById(R.id.scanBLEButton);
         scanWifiButton = findViewById(R.id.scanWifiButton);
         saveLocation= findViewById(R.id.saveLocation);
-        recyclerView = findViewById(R.id.recycleViewLocation);
+        recyclerView = findViewById(R.id.recycleViewRLocation);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         setAll();
@@ -102,7 +91,9 @@ public class BLEDevicePositionActivity extends AppCompatActivity
         }
         else
         {
-            scanBLEDevice();
+            mBluetoothAdapter.startDiscovery();
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            registerReceiver(mReceiver, filter);
         }
 
         scanBLEButton.setOnClickListener(new View.OnClickListener()
@@ -119,7 +110,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
                 else
                 {
 
-                    scanBLEDevice();
+                    scanDevice();
                 }
 
 
@@ -170,7 +161,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
         {
             case PERMISSION_REQUEST_BLUETOOTH:
                 Log.d(TAG, "Result");
-                scanBLEDevice();
+                scanDevice();
         }
     }
     @Override
@@ -236,14 +227,14 @@ public class BLEDevicePositionActivity extends AppCompatActivity
         final double distance=calculateDistance(info.getRssi(),info.getFrequency());
         final String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
 
-        final Device device=new Device(fId,info.getMacAddress(),distance,4.55,0.0,(double)info.getRssi(),100,currentDate);
+        final RealDevice device=new RealDevice(fId,info.getMacAddress(),distance,4.55,0.0,(double)info.getRssi(),100,currentDate);
         realm.executeTransaction(new Realm.Transaction() {
             @Override
             public void execute(Realm bgRealm)
             {
                 try
                 {
-                    Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
+                    RealDevice device1 = bgRealm.createObject(RealDevice.class, UUID.randomUUID().toString());
                     device1.setMeasureId(fId);
                     device1.setMacAddres(device.getMacAddres());
                     device1.setDistance(distance);
@@ -252,11 +243,11 @@ public class BLEDevicePositionActivity extends AppCompatActivity
                     device1.setRssi(device.getRssi());
                     device1.setBatteryLevel(100);
                     device1.setCreatedAt(currentDate);
-                    Toast.makeText(BLEDevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RealDevicePositionActivity.this,"Wifi information Saved!",Toast.LENGTH_SHORT).show();
                 }
                 catch (RealmPrimaryKeyConstraintException ex)
                 {
-                    Toast.makeText(BLEDevicePositionActivity.this,"Wifi information alreayd exists for this ID!",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RealDevicePositionActivity.this,"Wifi information alreayd exists for this ID!",Toast.LENGTH_SHORT).show();
 
                 }
 
@@ -275,58 +266,43 @@ public class BLEDevicePositionActivity extends AppCompatActivity
 
 
 
-    private void scanBLEDevice()
+    private void scanDevice()
     {
-        if (!mScanning) {
-            // Stops scanning after a pre-defined scan period
-            mHandler.postDelayed(new Runnable()
-            {
-                @Override
-                public void run() {
-                    mScanning = false;
-                    bluetoothLeScanner.stopScan(leScanCallback);
-                }
-            }, SCAN_PERIOD);
-
-            mScanning = true;
-            bluetoothLeScanner.startScan(leScanCallback);
-        } else
-        {
-            mScanning = false;
-            bluetoothLeScanner.stopScan(leScanCallback);
-        }
+        mBluetoothAdapter.startDiscovery();
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(mReceiver, filter);
     }
     // Device scan callback.
 
-    private ScanCallback leScanCallback =
-            new ScanCallback() {
-                @Override
-                public void onScanResult(int callbackType, ScanResult result)
-                {
-                    super.onScanResult(callbackType, result);
-                    mDevice=result.getDevice();
-                    bleDevicePositionAdapter.addDevice(result.getDevice());
-                    bleDevicePositionAdapter.addBatteryLevel(result.getDevice(),99);
-                    new BluetoothTask(BLEDevicePositionActivity.this).execute();
-                    bleDevicePositionAdapter.addRssi(result.getDevice(), (double) result.getRssi());
-                    bleDevicePositionAdapter.addTxPower(result.getDevice(),-69.0);
-                    bleDevicePositionAdapter.notifyDataSetChanged();
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver()
+    {
+        public void onReceive(Context context, Intent intent)
+        {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action))
+            {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                realDevicePositionAdapter.addDevice(device);
+                realDevicePositionAdapter.addBatteryLevel(device,99);
+                realDevicePositionAdapter.addRssi(device,intent.getShortExtra(BluetoothDevice.EXTRA_RSSI,Short.MIN_VALUE));
+                realDevicePositionAdapter.notifyDataSetChanged();
 
-                }
-            };
+            }
+        }
+    };
 
     private void setAll()
     {
         createNewMeasureID();
-        bleDevicePositionAdapter = new BLEDevicePositionAdapter(getApplicationContext());
-        recyclerView.setAdapter(bleDevicePositionAdapter);
+        realDevicePositionAdapter = new RealDevicePositionAdapter(getApplicationContext());
+        recyclerView.setAdapter(realDevicePositionAdapter);
 
     }
 
     public void determineLocation()
     {
 
-        Device lastDevice = realm.where(Device.class).sort("createdAt", Sort.DESCENDING).findFirst();
+        RealDevice lastDevice = realm.where(RealDevice.class).sort("createdAt", Sort.DESCENDING).findFirst();
         String lastUUID=lastDevice.getMeasureId();
 
         RealmResults<Device> result = realm.where(Device.class).equalTo("measureId",lastUUID).findAll();
@@ -364,11 +340,11 @@ public class BLEDevicePositionActivity extends AppCompatActivity
                         location.setLocationY(calculatedLocation.getLocationY());
                         location.setMeasureId(fId);
                         location.setCreatedAt(currentDate);
-                        Toast.makeText(BLEDevicePositionActivity.this, "X:" + df.format(centroid[0]) + " Y:" + df.format(centroid[1]), Toast.LENGTH_LONG).show();
+                        Toast.makeText(RealDevicePositionActivity.this, "X:" + df.format(centroid[0]) + " Y:" + df.format(centroid[1]), Toast.LENGTH_LONG).show();
                     }
                     catch (RealmPrimaryKeyConstraintException ex)
                     {
-                        Toast.makeText(BLEDevicePositionActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RealDevicePositionActivity.this, ex.getMessage(), Toast.LENGTH_SHORT).show();
 
                     }
 
@@ -405,92 +381,8 @@ public class BLEDevicePositionActivity extends AppCompatActivity
     @Override
     protected void onDestroy()
     {
+        unregisterReceiver(mReceiver);
         super.onDestroy();
         realm.close();
-    }
-
-    private class BluetoothTask extends AsyncTask<Void, Void, Void> {
-        private final Context mContext;
-
-        private BluetoothGatt mBluetoothGatt;
-        private BluetoothGattCallback mGattCallback = new BluetoothGattCallback()
-        {
-            @Override
-            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState)
-            {
-                super.onConnectionStateChange(gatt, status, newState);
-                if (newState == BluetoothProfile.STATE_CONNECTED)
-                {
-                    Log.i(TAG, "Connected to GATT server.");
-                    Log.i(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
-
-                }
-                else if (newState == BluetoothProfile.STATE_DISCONNECTED)
-                {
-                    Log.i(TAG, "Disconnected from GATT server.");
-                }
-            }
-
-            @Override
-            public void onServicesDiscovered(BluetoothGatt gatt, int status)
-            {
-                super.onServicesDiscovered(gatt, status);
-
-                Log.d(TAG, "Services discovered status: " + status);
-
-                for (BluetoothGattService service : gatt.getServices())
-                {
-                    if (service.getUuid().equals(BATTERY_UUID))
-                    {
-                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(BATTERY_LEVEL);
-
-                        if (characteristic != null)
-                        {
-                            mBluetoothGatt.readCharacteristic(characteristic);
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onCharacteristicRead(final BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status)
-            {
-                super.onCharacteristicRead(gatt, characteristic, status);
-
-                final Integer batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-
-                if (batteryLevel != null)
-                {
-                    Log.i(TAG, "battery level: " + batteryLevel);
-                    mHandler.post(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            bleDevicePositionAdapter.addBatteryLevel(gatt.getDevice(),batteryLevel);
-                        }
-                    });
-                }
-
-
-            }
-        };
-
-        public BluetoothTask(Context context) {
-            this.mContext = context;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            mBluetoothGatt = mDevice.connectGatt(mContext, false, mGattCallback);
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid)
-        {
-
-        }
     }
 }

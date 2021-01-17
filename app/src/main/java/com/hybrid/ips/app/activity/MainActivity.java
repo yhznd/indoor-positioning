@@ -46,8 +46,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view)
             {
-                //Intent onlineActivity=new Intent(MainActivity.this,BeaconListActivity.class);
-                //startActivity(onlineActivity);
+                Intent onlineActivity=new Intent(MainActivity.this,RealDevicePositionActivity.class);
+                startActivity(onlineActivity);
             }
         });
 

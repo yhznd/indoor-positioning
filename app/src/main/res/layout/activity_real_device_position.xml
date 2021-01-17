@@ -6,10 +6,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground"
-    tools:context=".activity.BLEDevicePositionActivity">
+    tools:context=".activity.RealDevicePositionActivity">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycleViewLocation"
+        android:id="@+id/recycleViewRLocation"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="5dp"

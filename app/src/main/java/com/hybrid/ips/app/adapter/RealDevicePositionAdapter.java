@@ -12,12 +12,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
-import com.hybrid.ips.app.util.Device;
-import com.hybrid.ips.app.filters.KalmanFilter;
+
 import com.hybrid.ips.app.R;
+import com.hybrid.ips.app.filters.KalmanFilter;
+import com.hybrid.ips.app.util.Device;
+import com.hybrid.ips.app.util.RealDevice;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -30,9 +33,9 @@ import io.realm.Realm;
 import io.realm.exceptions.RealmPrimaryKeyConstraintException;
 
 
-public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePositionAdapter.ViewHolder> {
+public class RealDevicePositionAdapter extends RecyclerView.Adapter<RealDevicePositionAdapter.ViewHolder> {
     private ArrayList<BluetoothDevice> deviceList;
-    private static final String TAG = "BLE_Connection";
+    private static final String TAG = "Device_Connection";
     private HashMap<BluetoothDevice, Double> hashRssiMap;
     private HashMap<BluetoothDevice, Double> hashTxPowerMap;
     private HashMap<BluetoothDevice, Integer> hashBatteryLevel;
@@ -44,7 +47,7 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
     private static final double KALMAN_Q = 0.5d;
 
 
-    public BLEDevicePositionAdapter(Context context)
+    public RealDevicePositionAdapter(Context context)
     {
         this.context=context;
         deviceList = new ArrayList<BluetoothDevice>();
@@ -57,16 +60,20 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.device_list, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.real_device_list, parent, false);
         return new ViewHolder(view);
     }
 
     public void addDevice(BluetoothDevice device)
     {
-        if (!deviceList.contains(device) && device.getName()!=null && device.getName().trim().equals("POI")
-         || !deviceList.contains(device) && device.getName()!=null && device.getName().trim().equals("iTAG"))
+        if (!deviceList.contains(device))
         {
-            deviceList.add(device);
+            if(device.getAddress().equals("E4:AA:EA:AE:C6:E4")
+            ||device.getAddress().equals("34:F3:9A:9F:8A:52")
+            ||device.getAddress().equals("C4:A3:6B:D1:B2:24")
+            ||device.getAddress().equals("6D:F3:03:9A:24:E3")
+            ||device.getAddress().equals("E8:7F:95:5F:35:74"))
+                deviceList.add(device);
 
         }
     }
@@ -94,22 +101,16 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
                 Log.i(TAG, "Old Rssi: " + rssi + "Smoothed RSSI: " + smoothedRssi);
             }
 
-
-            if (smoothedRssi>=-80.0)
+            hashRssiMap.put(device, smoothedRssi);
+            /*if (smoothedRssi>=-80.0)
                 hashRssiMap.put(device, smoothedRssi);
             else
             {
                 removeAt(deviceList.indexOf(device));
-            }
+            }*/
         }
     }
 
-    public void addTxPower(BluetoothDevice device, double txPower)
-    {
-        if (deviceList.contains(device)) {
-            hashTxPowerMap.put(device, txPower);
-        }
-    }
 
     public void addBatteryLevel(BluetoothDevice device, Integer batteryLevel)
     {
@@ -123,13 +124,13 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
     public void onBindViewHolder(@NonNull final ViewHolder holder, final int position)
     {
         final BluetoothDevice device = deviceList.get(position);
-        holder.deviceMac.setText(context.getString(R.string.ble_device_name,device.getAddress()+" - " +device.getName()));
+        holder.deviceMac.setText(context.getString(R.string.ble_device_name,device.getAddress()+" - " +determineDeviceName(device.getAddress())));
         holder.deviceRssi.setText(context.getString(R.string.ble_rssi,hashRssiMap.get(device)));
         holder.deviceBattery.setText("%"+context.getString(R.string.ble_battery,hashBatteryLevel.get(device)));
         holder.deviceCoordinates.setText(context.getString(R.string.ble_coordinates,
                                                             determineX(device.getAddress()),
                                                             determineY(device.getAddress())));
-        holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(hashRssiMap.get(device), hashTxPowerMap.get(device)))));
+        holder.deviceDistance.setText(context.getString(R.string.ble_distance,df2.format(calculateDistance(hashRssiMap.get(device)))));
 
         holder.cardView.setOnClickListener(new View.OnClickListener()
         {
@@ -141,21 +142,21 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
                 final String fId = pref.getString("measureId", "not defined"); // getting UUID
                 String currentDate = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
                 String macAddress = device.getAddress();
-                double distance = calculateDistance(hashRssiMap.get(device), hashTxPowerMap.get(device));
+                double distance = calculateDistance(hashRssiMap.get(device));
                 int battery=hashBatteryLevel.get(device);
                 double x = determineX(device.getAddress());
                 double y = determineY(device.getAddress());
                 double rssi = hashRssiMap.get(device);
 
 
-                final Device deviceBLE = new Device(fId, macAddress, distance, x, y, rssi, battery,currentDate);
+                final RealDevice deviceBLE = new RealDevice(fId, macAddress, distance, x, y, rssi, battery,currentDate);
                 realm = Realm.getDefaultInstance();
                 realm.executeTransaction(new Realm.Transaction()
                 {
                     @Override
                     public void execute(Realm bgRealm) {
                         try {
-                            Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
+                            RealDevice device1 = bgRealm.createObject(RealDevice.class, UUID.randomUUID().toString());
                             device1.setMeasureId(fId);
                             device1.setMacAddres(deviceBLE.getMacAddres());
                             device1.setDistance(deviceBLE.getDistance());
@@ -207,9 +208,9 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
     }
 
 
-    protected static double calculateDistance(double rssi, double txPower)
+    protected static double calculateDistance(double rssi)
     {
-        return Math.pow(10d, ( txPower - rssi) / (10 * 2));
+        return Math.pow(10d, ( 0 - rssi) / (10 * 2));
     }
 
     public double determineX(String deviceAddress)
@@ -248,6 +249,23 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
             y=2.8;
 
         return  y;
+    }
+
+    public String determineDeviceName(String deviceAddress)
+    {
+        String name="";
+        if(deviceAddress.equals("E4:AA:EA:AE:C6:E4"))
+            name= "PC";
+        else if(deviceAddress.equals("34:F3:9A:9F:8A:52"))
+            name= "Work Laptop";
+        else if(deviceAddress.equals("C4:A3:6B:D1:B2:24"))
+            name= "MI BAND";
+        else if(deviceAddress.equals("6D:F3:03:9A:24:E3"))
+            name= "AirPod";
+        else if(deviceAddress.equals("E8:7F:95:5F:35:74"))
+            name= "iPhone";
+
+        return name;
     }
 
     public void removeAt(int position)

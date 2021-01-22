@@ -157,7 +157,7 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
                         try {
                             Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
                             device1.setMeasureId(fId);
-                            device1.setMacAddres(deviceBLE.getMacAddres());
+                            device1.setMacAddress(deviceBLE.getMacAddress());
                             device1.setDistance(deviceBLE.getDistance());
                             device1.setX(deviceBLE.getX());
                             device1.setY(deviceBLE.getY());

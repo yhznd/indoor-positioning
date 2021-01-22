@@ -245,7 +245,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
                 {
                     Device device1 = bgRealm.createObject(Device.class, UUID.randomUUID().toString());
                     device1.setMeasureId(fId);
-                    device1.setMacAddres(device.getMacAddres());
+                    device1.setMacAddress(device.getMacAddress());
                     device1.setDistance(distance);
                     device1.setX(4.55);
                     device1.setY(0.0);

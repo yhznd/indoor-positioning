@@ -9,7 +9,7 @@ public class Device extends RealmObject
     @PrimaryKey
     String id;
     String measureId;
-    String macAddres;
+    String macAddress;
     Double distance;
     Double x;
     Double y;
@@ -33,12 +33,12 @@ public class Device extends RealmObject
         this.measureId = measureId;
     }
 
-    public String getMacAddres() {
-        return macAddres;
+    public String getMacAddress() {
+        return macAddress;
     }
 
-    public void setMacAddres(String macAddres) {
-        this.macAddres = macAddres;
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
     }
 
     public Double getDistance() {
@@ -92,9 +92,9 @@ public class Device extends RealmObject
         this.batteryLevel = batteryLevel;
     }
 
-    public Device(String measureId, String macAddres, Double distance, Double x, Double y, Double rssi, Integer batteryLevel,String createdAt) {
+    public Device(String measureId, String macAddress, Double distance, Double x, Double y, Double rssi, Integer batteryLevel, String createdAt) {
         this.measureId = measureId;
-        this.macAddres = macAddres;
+        this.macAddress = macAddress;
         this.distance = distance;
         this.x = x;
         this.y = y;

@@ -18,7 +18,6 @@ import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -236,7 +235,7 @@ public class RealDevicePositionActivity extends AppCompatActivity
                 {
                     RealDevice device1 = bgRealm.createObject(RealDevice.class, UUID.randomUUID().toString());
                     device1.setMeasureId(fId);
-                    device1.setMacAddres(device.getMacAddres());
+                    device1.setMacAddress(device.getMacAddress());
                     device1.setDistance(distance);
                     device1.setX(4.55);
                     device1.setY(0.0);

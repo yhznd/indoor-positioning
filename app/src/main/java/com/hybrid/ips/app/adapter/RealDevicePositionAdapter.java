@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.hybrid.ips.app.R;
 import com.hybrid.ips.app.filters.KalmanFilter;
-import com.hybrid.ips.app.util.Device;
 import com.hybrid.ips.app.util.RealDevice;
 
 import java.text.DecimalFormat;
@@ -158,7 +157,7 @@ public class RealDevicePositionAdapter extends RecyclerView.Adapter<RealDevicePo
                         try {
                             RealDevice device1 = bgRealm.createObject(RealDevice.class, UUID.randomUUID().toString());
                             device1.setMeasureId(fId);
-                            device1.setMacAddres(deviceBLE.getMacAddres());
+                            device1.setMacAddress(deviceBLE.getMacAddress());
                             device1.setDistance(deviceBLE.getDistance());
                             device1.setX(deviceBLE.getX());
                             device1.setY(deviceBLE.getY());

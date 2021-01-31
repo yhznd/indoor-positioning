@@ -42,9 +42,8 @@ public class RealDevicePositionAdapter extends RecyclerView.Adapter<RealDevicePo
     private DecimalFormat df2 = new DecimalFormat("#.####");
     private Realm realm;
     private Context context;
-    private static final double KALMAN_R = 0.125d;
-    private static final double KALMAN_Q = 0.5d;
-
+    private static final double KALMAN_R = 0.5d;
+    private static final double KALMAN_Q = 0.125d;
 
     public RealDevicePositionAdapter(Context context)
     {
@@ -207,11 +206,13 @@ public class RealDevicePositionAdapter extends RecyclerView.Adapter<RealDevicePo
     }
 
 
-    protected static double calculateDistance(double rssi)
+    public double calculateDistance(double signalLevelInDb)
     {
-        return Math.pow(10d, ( 0 - rssi) / (10 * 2));
-    }
+        double exp = (92.45 - (20 * Math.log10(2.45)) + Math.abs(signalLevelInDb)) / 20.0;
+        return Math.pow(10.0, exp);
 
+        //Resource: https://en.wikipedia.org/wiki/Free-space_path_loss#Free-space_path_loss_in_decibels
+    }
     public double determineX(String deviceAddress)
     {
         double x = 0.0;

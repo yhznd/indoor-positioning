@@ -237,7 +237,7 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
         if(deviceAddress.trim().contains("ED:7B:9D")) //iBeacon1-origin
             y=0.0;
         else if(deviceAddress.trim().contains("FF:FF:25")) //iBeacon2
-            y=1.1;
+            y=1.08;
         else if(deviceAddress.trim().contains("FF:A2:5C")) //iBeacon3
             y=0.0;
         else if(deviceAddress.trim().contains("FF:0F:D9")) //iBeacon4

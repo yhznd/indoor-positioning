@@ -66,7 +66,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothDevice mDevice;
     private Handler mHandler = new Handler();
-    private static final long SCAN_PERIOD = 10000; //10 second
+    private static final long SCAN_PERIOD = 4000; //4 second
     private DecimalFormat df = new DecimalFormat("#.###");
     private BLEDevicePositionAdapter bleDevicePositionAdapter;
     private RecyclerView recyclerView;
@@ -351,7 +351,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
             NonLinearLeastSquaresSolver solver = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances), new LevenbergMarquardtOptimizer());
             LeastSquaresOptimizer.Optimum optimum = solver.solve();
             final double[] centroid = optimum.getPoint().toArray();
-            final Location calculatedLocation = new Location(UUID.randomUUID().toString(), fId, centroid[0], centroid[1], currentDate);
+            final Location calculatedLocation = new Location(UUID.randomUUID().toString(), fId, centroid[0], centroid[1], findBLEDeviceArea(centroid[0], centroid[1]), currentDate);
             realm.executeTransaction(new Realm.Transaction()
             {
                 @Override
@@ -363,6 +363,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
                         location.setLocationX(calculatedLocation.getLocationX());
                         location.setLocationY(calculatedLocation.getLocationY());
                         location.setMeasureId(fId);
+                        location.setArea(calculatedLocation.getArea());
                         location.setCreatedAt(currentDate);
                         Toast.makeText(BLEDevicePositionActivity.this, "X:" + df.format(centroid[0]) + " Y:" + df.format(centroid[1]), Toast.LENGTH_LONG).show();
                     }
@@ -493,5 +494,70 @@ public class BLEDevicePositionActivity extends AppCompatActivity
         {
 
         }
+    }
+
+    public String findBLEDeviceArea(double x,double y)
+    {
+        String area="N/A";
+        //HALL
+        if(x>=0.0 && x<=0.80 && y>=0.0 && y<=0.36)
+            area="A1";
+        else if(x>=0.0 && x<=0.80 && y>0.36 && y<=0.72)
+            area="A2";
+        else if(x>=0.0 && x<=0.80 && y>0.72 && y<=1.08)
+            area="A3";
+
+        else if(x>0.80 && x<=1.60 && y>=0.0 && y<=0.36)
+            area="A4";
+        else if(x>0.80 && x<=1.60 && y>0.36 && y<=0.72)
+            area="A5";
+        else if(x>0.80 && x<=1.60 && y>0.72 && y<=1.08)
+            area="A6";
+
+        else if(x>1.60 && x<=2.40 && y>=0.0 && y<=0.36)
+            area="A7";
+        else if(x>1.60 && x<=2.40 && y>0.36 && y<=0.72)
+            area="A8";
+        else if(x>1.60 && x<=2.40 && y>0.72 && y<=1.08)
+            area="A9";
+
+            //ROOM
+        else if(x>=2.50 && x<=3.525 && y>=0.0 && y<=0.70)
+            area="O1";
+        else if(x>=2.50 && x<=3.525 && y>0.70 && y<=1.40)
+            area="O2";
+        else if(x>=2.50 && x<=3.525 && y>1.40 && y<=2.10)
+            area="O3";
+        else if(x>=2.50 && x<=3.525 && y>2.10 && y<=2.80)
+            area="O4";
+
+        else if(x>=3.525 && x<=4.55 && y>=0.0 && y<=0.70)
+            area="O5";
+        else if(x>=3.525 && x<=4.55  && y>0.70 && y<=1.40)
+            area="O6";
+        else if(x>=3.525 && x<=4.55 && y>1.40 && y<=2.10)
+            area="O7";
+        else if(x>=3.525 && x<=4.55 && y>2.10 && y<=2.80)
+            area="O8";
+
+        else if(x>=4.55 && x<=5.575 && y>=0.0 && y<=0.70)
+            area="O9";
+        else if(x>=4.55 && x<=5.575  && y>0.70 && y<=1.40)
+            area="O10";
+        else if(x>=4.55 && x<=5.575 && y>1.40 && y<=2.10)
+            area="O11";
+        else if(x>=4.55 && x<=5.575 && y>2.10 && y<=2.80)
+            area="O12";
+
+        else if(x>=5.575 && x<=6.6 && y>=0.0 && y<=0.70)
+            area="O13";
+        else if(x>=5.575 && x<=6.6  && y>0.70 && y<=1.40)
+            area="O14";
+        else if(x>=5.575 && x<=6.6 && y>1.40 && y<=2.10)
+            area="O15";
+        else if(x>=5.575 && x<=6.6 && y>2.10 && y<=2.80)
+            area="O16";
+
+        return area;
     }
 }

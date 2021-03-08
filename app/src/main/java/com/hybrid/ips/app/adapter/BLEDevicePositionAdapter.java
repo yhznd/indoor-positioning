@@ -95,7 +95,7 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
             }
 
 
-            if (smoothedRssi>=-80.0)
+            if (smoothedRssi>=-90.0)
                 hashRssiMap.put(device, smoothedRssi);
             else
             {

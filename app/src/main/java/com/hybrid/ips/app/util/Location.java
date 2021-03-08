@@ -10,6 +10,7 @@ public class Location extends RealmObject
     String measureId;
     double locationX;
     double locationY;
+    String area;
     String createdAt;
 
     public String getId() {
@@ -52,15 +53,24 @@ public class Location extends RealmObject
         this.createdAt = createdAt;
     }
 
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
     public Location() {
     }
 
-    public Location(String id, String measureId, double locationX, double locationY, String createdAt)
+    public Location(String id, String measureId, double locationX, double locationY, String area,String createdAt)
     {
         this.id = id;
         this.measureId = measureId;
         this.locationX = locationX;
         this.locationY = locationY;
+        this.area=area;
         this.createdAt = createdAt;
     }
 }

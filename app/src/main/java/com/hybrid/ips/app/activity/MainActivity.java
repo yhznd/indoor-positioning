@@ -2,7 +2,6 @@ package com.hybrid.ips.app.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
-
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -11,11 +10,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.hybrid.ips.app.R;
-
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 
@@ -40,6 +37,7 @@ public class MainActivity extends AppCompatActivity
         Realm.init(this);
         realmConfiguration = new RealmConfiguration.Builder().allowWritesOnUiThread(true).build();
         realm = Realm.getInstance(realmConfiguration);
+
 
 
         fbSeeLocation.setOnClickListener(new View.OnClickListener() {

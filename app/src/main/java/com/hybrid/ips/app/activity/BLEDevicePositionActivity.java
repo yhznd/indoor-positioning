@@ -408,7 +408,7 @@ public class BLEDevicePositionActivity extends AppCompatActivity
     protected void onDestroy()
     {
         super.onDestroy();
-        realm.close();
+        //realm.close();
     }
 
     private class BluetoothTask extends AsyncTask<Void, Void, Void> {

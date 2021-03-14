@@ -412,13 +412,13 @@ public class RealDevicePositionActivity extends AppCompatActivity
             area="A9";
 
         //ROOM
-        else if(x>=2.50 && x<=3.525 && y>=0.0 && y<=0.70)
+        else if(x>=2.40 && x<=3.525 && y>=0.0 && y<=0.70)
             area="O1";
-        else if(x>=2.50 && x<=3.525 && y>0.70 && y<=1.40)
+        else if(x>=2.40 && x<=3.525 && y>0.70 && y<=1.40)
             area="O2";
-        else if(x>=2.50 && x<=3.525 && y>1.40 && y<=2.10)
+        else if(x>=2.40 && x<=3.525 && y>1.40 && y<=2.10)
             area="O3";
-        else if(x>=2.50 && x<=3.525 && y>2.10 && y<=2.80)
+        else if(x>=2.40 && x<=3.525 && y>2.10 && y<=2.80)
             area="O4";
 
         else if(x>=3.525 && x<=4.55 && y>=0.0 && y<=0.70)

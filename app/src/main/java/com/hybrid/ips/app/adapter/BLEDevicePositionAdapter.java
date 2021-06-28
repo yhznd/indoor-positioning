@@ -40,8 +40,8 @@ public class BLEDevicePositionAdapter extends RecyclerView.Adapter<BLEDevicePosi
     private DecimalFormat df2 = new DecimalFormat("#.####");
     private Realm realm;
     private Context context;
-    private static final double KALMAN_R = 0.125d;
-    private static final double KALMAN_Q = 0.5d;
+    private static final double KALMAN_Q = 0.125d;
+    private static final double KALMAN_R = 0.5d;
 
 
     public BLEDevicePositionAdapter(Context context)
